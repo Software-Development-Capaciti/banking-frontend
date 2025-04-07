@@ -2,52 +2,6 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { CashStack, ArrowLeftRight, WalletFill, Wallet2, ClockHistory, ArrowLeft } from 'react-bootstrap-icons';
 
-// Add responsive styles
-const styles = {
-  accountCard: {
-    cursor: 'pointer',
-    transition: 'transform 0.2s, box-shadow 0.2s',
-    height: '100%',
-    minHeight: '200px',
-    marginBottom: '1rem'
-  },
-  accountCardHover: {
-    transform: 'translateY(-5px)',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-  },
-  balanceCard: {
-    height: '100%',
-    minHeight: '120px',
-    marginBottom: '1rem'
-  },
-  transactionItem: {
-    transition: 'background-color 0.2s',
-    padding: '1rem',
-    borderLeft: '4px solid transparent',
-    width: '100%',
-    overflowX: 'hidden'
-  },
-  transactionItemHover: {
-    backgroundColor: '#f8f9fa'
-  },
-  container: {
-    maxWidth: '1200px',
-    width: '100%',
-    padding: '1rem',
-    margin: '0 auto',
-    boxSizing: 'border-box'
-  },
-  transactionAmount: {
-    wordBreak: 'break-word',
-    textAlign: 'right',
-    minWidth: '100px'
-  },
-  formContainer: {
-    maxWidth: '100%',
-    margin: '0 auto'
-  }
-};
-
 function Transactions() {
   const [transactions, setTransactions] = useState([]);
   const [activeView, setActiveView] = useState('accounts');
@@ -64,6 +18,77 @@ function Transactions() {
     recipientName: '',
     recipientAccountNumber: ''
   });
+
+  const styles = {
+    container: {
+      backgroundColor: '#1A2526',
+      minHeight: 'calc(100vh - 60px)',
+      marginLeft: window.innerWidth < 768 ? '0' : '170px',
+      paddingTop: '60px',
+      overflowY: 'auto',
+      boxSizing: 'border-box',
+      width: window.innerWidth < 768 ? '100%' : 'calc(100% - 150px)',
+      position: 'relative',
+      padding: '1.5rem'
+    },
+    accountCard: {
+      backgroundColor: '#2A3B3C',
+      border: 'none',
+      borderRadius: '15px',
+      boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+      padding: '15px',
+      cursor: 'pointer',
+      transition: 'transform 0.2s, box-shadow 0.2s'
+    },
+    accountCardHover: {
+      transform: 'translateY(-5px)',
+      boxShadow: '0 6px 20px rgba(0,0,0,0.4)'
+    },
+    transactionCard: {
+      backgroundColor: '#2A3B3C',
+      border: 'none',
+      borderRadius: '15px',
+      boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+      marginBottom: '1rem'
+    },
+    formContainer: {
+      backgroundColor: '#1A2526',
+      borderRadius: '15px',
+      padding: '1.5rem'
+    },
+    input: {
+      backgroundColor: '#2A3B3C',
+      border: '1px solid #3A4B4C',
+      color: 'white',
+      borderRadius: '8px'
+    },
+    button: {
+      backgroundColor: '#00C4B4',
+      border: 'none',
+      borderRadius: '8px',
+      padding: '0.5rem 1.5rem',
+      color: 'white',
+      transition: 'background-color 0.2s'
+    },
+    buttonHover: {
+      backgroundColor: '#00A89A'
+    },
+    transactionItem: {
+      transition: 'background-color 0.2s',
+      padding: '1rem',
+      borderLeft: '4px solid transparent',
+      width: '100%',
+      overflowX: 'hidden'
+    },
+    transactionItemHover: {
+      backgroundColor: '#2A3B3C'
+    },
+    transactionAmount: {
+      wordBreak: 'break-word',
+      textAlign: 'right',
+      minWidth: '100px'
+    }
+  };
 
   useEffect(() => {
     if (activeAccount) {
@@ -203,48 +228,45 @@ function Transactions() {
   const renderTransactionHistory = () => {
     if (!transactions.length) {
       return (
-        <div className="card mt-4">
+        <div className="card" style={styles.transactionCard}>
           <div className="card-body text-center py-5">
-            <h5 className="text-muted mb-0">No transactions found</h5>
+            <h5 className="text-white mb-0">No transactions found</h5>
           </div>
         </div>
       );
     }
 
     return (
-      <div className="card mt-4">
-        <div className="card-header bg-light">
-          <h5 className="mb-0">Transaction History</h5>
+      <div className="card" style={styles.transactionCard}>
+        <div className="card-header" style={{ backgroundColor: '#1A2526', borderBottom: '1px solid #3A4B4C' }}>
+          <h5 className="mb-0 text-white">Transaction History</h5>
         </div>
-        <div className="list-group list-group-flush">
+        <div className="card-body p-0">
           {transactions.map((transaction, index) => (
             <div
-              key={index}
-              className="list-group-item"
+              key={transaction.id || index}
               style={{
                 ...styles.transactionItem,
                 ...(hoveredTransaction === index ? styles.transactionItemHover : {}),
-                borderLeftColor: transaction.amount < 0 ? '#dc3545' : '#198754'
+                borderBottom: index < transactions.length - 1 ? '1px solid #3A4B4C' : 'none'
               }}
               onMouseEnter={() => setHoveredTransaction(index)}
               onMouseLeave={() => setHoveredTransaction(null)}
             >
-              <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+              <div className="d-flex justify-content-between align-items-center text-white">
                 <div>
                   <h6 className="mb-1">{transaction.description}</h6>
-                  <p className="text-muted small mb-0">
-                    {formatDate(transaction.date)}
-                    {transaction.type === 'PAY' && transaction.recipientName && (
-                      <> • {transaction.recipientName}</>
-                    )}
-                    {transaction.type === 'PAY' && transaction.recipientAccountNumber && (
-                      <> • Account: {transaction.recipientAccountNumber}</>
-                    )}
-                  </p>
+                  <small className="text-muted">
+                    {new Date(transaction.date).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </small>
                 </div>
                 <div style={styles.transactionAmount}>
-                  <span className={transaction.amount < 0 ? 'text-danger' : 'text-success'}>
-                    {formatAmount(transaction.amount)}
+                  <span className={transaction.type === 'credit' ? 'text-success' : 'text-danger'}>
+                    {transaction.type === 'credit' ? '+' : '-'}${Math.abs(transaction.amount).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -273,10 +295,10 @@ function Transactions() {
             fetchTransactions();
           }}
         >
-          <div className="card-body d-flex flex-column align-items-center justify-content-center text-center">
-            <WalletFill size={48} className="text-primary mb-3" />
+          <div className="card-body d-flex flex-column align-items-center justify-content-center text-center text-white">
+            <WalletFill size={48} className="text-#00C4B4 mb-3" />
             <h3 className="card-title mb-3">Current Account</h3>
-            <h4 className="text-primary mb-3">{formatAmount(25000)}</h4>
+            <h4 className="text-#00C4B4 mb-3">{formatAmount(25000)}</h4>
             <p className="card-text text-muted">Your everyday spending account</p>
           </div>
         </div>
@@ -297,10 +319,10 @@ function Transactions() {
             fetchTransactions();
           }}
         >
-          <div className="card-body d-flex flex-column align-items-center justify-content-center text-center">
-            <Wallet2 size={48} className="text-success mb-3" />
+          <div className="card-body d-flex flex-column align-items-center justify-content-center text-center text-white">
+            <Wallet2 size={48} className="text-#00C4B4 mb-3" />
             <h3 className="card-title mb-3">Savings Account</h3>
-            <h4 className="text-success mb-3">{formatAmount(50000)}</h4>
+            <h4 className="text-#00C4B4 mb-3">{formatAmount(50000)}</h4>
             <p className="card-text text-muted">Your long-term savings account</p>
           </div>
         </div>
@@ -352,8 +374,8 @@ function Transactions() {
                     setActiveView(`${activeAccount}-operations`);
                   }}
                 >
-                  <div className="card-body d-flex flex-column align-items-center justify-content-center text-center">
-                    <CashStack size={48} className={`text-${accountColor} mb-3`} />
+                  <div className="card-body d-flex flex-column align-items-center justify-content-center text-center text-white">
+                    <CashStack size={48} className="text-#00C4B4 mb-3" />
                     <h3 className="card-title mb-3">Pay</h3>
                     <p className="card-text text-muted">Make a payment from your {accountName.toLowerCase()}</p>
                   </div>
@@ -372,8 +394,8 @@ function Transactions() {
                     setActiveView(`${activeAccount}-operations`);
                   }}
                 >
-                  <div className="card-body d-flex flex-column align-items-center justify-content-center text-center">
-                    <ArrowLeftRight size={48} className={`text-${accountColor} mb-3`} />
+                  <div className="card-body d-flex flex-column align-items-center justify-content-center text-center text-white">
+                    <ArrowLeftRight size={48} className="text-#00C4B4 mb-3" />
                     <h3 className="card-title mb-3">Transfer</h3>
                     <p className="card-text text-muted">Transfer money between your accounts</p>
                   </div>
@@ -395,7 +417,7 @@ function Transactions() {
     const balance = isCurrentAccount ? 25000 : 50000;
 
     return (
-      <div style={{ ...styles.formContainer, overflowX: 'hidden' }}>
+      <div style={styles.formContainer}>
         <div className="card">
           <div className={`card-header bg-${accountColor} text-white`}>
             <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
@@ -423,7 +445,7 @@ function Transactions() {
           </div>
           <div className="card-body">
             {successMessage && (
-              <div className={`alert alert-${successMessage.includes('Failed') ? 'danger' : 'success'} mb-4`}>
+              <div className="alert" style={{ backgroundColor: '#00C4B4', color: 'white' }} role="alert">
                 {successMessage}
               </div>
             )}
@@ -437,6 +459,7 @@ function Transactions() {
                     value={formData.toAccount}
                     onChange={handleInputChange}
                     required
+                    style={styles.input}
                   >
                     <option value="">Select account</option>
                     {activeAccount === 'current' ? (
@@ -458,6 +481,7 @@ function Transactions() {
                       onChange={handleInputChange}
                       required
                       placeholder="Enter recipient's name"
+                      style={styles.input}
                     />
                   </div>
                   <div className="mb-3">
@@ -473,6 +497,7 @@ function Transactions() {
                       pattern="[0-9]*"
                       minLength="10"
                       maxLength="10"
+                      style={styles.input}
                     />
                   </div>
                 </>
@@ -490,6 +515,7 @@ function Transactions() {
                     required
                     min="0"
                     step="0.01"
+                    style={styles.input}
                   />
                 </div>
               </div>
@@ -503,12 +529,14 @@ function Transactions() {
                   onChange={handleInputChange}
                   required
                   placeholder="Enter a description for this transaction"
+                  style={styles.input}
                 />
               </div>
               <div className="d-grid">
                 <button 
                   type="submit" 
-                  className={`btn btn-${accountColor} btn-lg`}
+                  className={`btn ${styles.button}`}
+                  style={{ ...styles.button, ':hover': styles.buttonHover }}
                 >
                   {activeOperation === 'pay' ? 'Pay' : 'Transfer'}
                 </button>
@@ -524,9 +552,145 @@ function Transactions() {
 
   return (
     <div style={styles.container}>
-      {activeView === 'accounts' && renderAccountsView()}
-      {activeView === 'transactions' && renderTransactionsView()}
-      {(activeView === 'current-operations' || activeView === 'savings-operations') && renderOperationsView()}
+      {showTransactions && (
+        <button
+          className="btn mb-3"
+          onClick={() => setShowTransactions(false)}
+          style={{ color: '#00C4B4' }}
+        >
+          <ArrowLeft className="me-2" />
+          Back to Accounts
+        </button>
+      )}
+
+      {successMessage && (
+        <div className="alert" style={{ backgroundColor: '#00C4B4', color: 'white' }} role="alert">
+          {successMessage}
+        </div>
+      )}
+
+      {activeView === 'accounts' && (
+        <div className="row g-4">
+          <div className="col-12">
+            <h4 className="text-white mb-4">Select Account</h4>
+          </div>
+          <div className="col-12 col-md-6">
+            <div
+              className="card h-100"
+              style={{
+                ...styles.accountCard,
+                ...(hoveredCard === 'current' ? styles.accountCardHover : {})
+              }}
+              onMouseEnter={() => setHoveredCard('current')}
+              onMouseLeave={() => setHoveredCard(null)}
+              onClick={() => {
+                setActiveAccount('current');
+                setActiveView('transactions');
+                setShowTransactions(true);
+                fetchTransactions();
+              }}
+            >
+              <div className="card-body text-white">
+                <div className="d-flex align-items-center mb-3">
+                  <WalletFill size={24} className="me-2 text-#00C4B4" />
+                  <h5 className="mb-0">Current Account</h5>
+                </div>
+                <p className="text-muted mb-3">Account Number: 1234567890</p>
+                <h3 className="mb-4">{formatAmount(25000)}</h3>
+                <div className="d-flex gap-2">
+                  <button
+                    className="btn"
+                    style={styles.button}
+                    onClick={(e) => {
+                      setActiveOperation('pay');
+                      setActiveView(`${activeAccount}-operations`);
+                    }}
+                  >
+                    <CashStack className="me-2" />
+                    Pay
+                  </button>
+                  <button
+                    className="btn"
+                    style={styles.button}
+                    onClick={(e) => {
+                      setActiveOperation('transfer');
+                      setActiveView(`${activeAccount}-operations`);
+                    }}
+                  >
+                    <ArrowLeftRight className="me-2" />
+                    Transfer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-12 col-md-6">
+            <div
+              className="card h-100"
+              style={{
+                ...styles.accountCard,
+                ...(hoveredCard === 'savings' ? styles.accountCardHover : {})
+              }}
+              onMouseEnter={() => setHoveredCard('savings')}
+              onMouseLeave={() => setHoveredCard(null)}
+              onClick={() => {
+                setActiveAccount('savings');
+                setActiveView('transactions');
+                setShowTransactions(true);
+                fetchTransactions();
+              }}
+            >
+              <div className="card-body text-white">
+                <div className="d-flex align-items-center mb-3">
+                  <Wallet2 size={24} className="me-2 text-#00C4B4" />
+                  <h5 className="mb-0">Savings Account</h5>
+                </div>
+                <p className="text-muted mb-3">Account Number: 0987654321</p>
+                <h3 className="mb-4">{formatAmount(50000)}</h3>
+                <div className="d-flex gap-2">
+                  <button
+                    className="btn"
+                    style={styles.button}
+                    onClick={(e) => {
+                      setActiveOperation('pay');
+                      setActiveView(`${activeAccount}-operations`);
+                    }}
+                  >
+                    <CashStack className="me-2" />
+                    Pay
+                  </button>
+                  <button
+                    className="btn"
+                    style={styles.button}
+                    onClick={(e) => {
+                      setActiveOperation('transfer');
+                      setActiveView(`${activeAccount}-operations`);
+                    }}
+                  >
+                    <ArrowLeftRight className="me-2" />
+                    Transfer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showTransactions && (
+        <div className="row">
+          <div className="col-12 col-lg-6 mb-4">
+            {renderOperationsView()}
+          </div>
+          <div className="col-12 col-lg-6">
+            <div className="d-flex align-items-center mb-3">
+              <ClockHistory size={24} className="me-2 text-white" />
+              <h4 className="mb-0 text-white">Transaction History</h4>
+            </div>
+            {renderTransactionHistory()}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
