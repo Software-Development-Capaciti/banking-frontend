@@ -114,6 +114,7 @@ function Transactions() {
       setTransactions(response.data);
     } catch (error) {
       console.error('Error fetching transactions:', error);
+      setTransactions([]);
     }
   };
 
@@ -125,24 +126,26 @@ function Transactions() {
     }));
   };
 
-  const handlePay = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
     try {
-      const transaction = {
-        description: formData.description,
+      const payload = {
         amount: parseFloat(formData.amount),
+        description: formData.description,
+        type: activeOperation === 'pay' ? 'debit' : 'transfer',
         accountType: activeAccount,
-        type: 'PAY',
+        date: new Date().toISOString().split('T')[0],
         recipientName: formData.recipientName,
-        recipientAccountNumber: formData.recipientAccountNumber
+        recipientAccountNumber: formData.recipientAccountNumber,
+        toAccount: activeOperation === 'transfer' ? formData.toAccount : null
       };
 
-      console.log('Sending payment:', transaction);
-      const response = await axios.post('http://localhost:8080/api/transactions/pay', transaction);
-      console.log('Payment response:', response.data);
-      
+      const endpoint = activeOperation === 'pay' ? 'pay' : 'transfer';
+      const response = await axios.post(`http://localhost:8080/api/transactions/${endpoint}`, payload);
+
       if (response.data) {
-        // Reset form
+        setSuccessMessage(`${activeOperation === 'pay' ? 'Payment' : 'Transfer'} successful!`);
         setFormData({
           amount: '',
           description: '',
@@ -150,63 +153,16 @@ function Transactions() {
           recipientName: '',
           recipientAccountNumber: ''
         });
+        fetchTransactions();
 
-        // Show success message
-        setSuccessMessage(`Payment of ${formatAmount(transaction.amount)} to ${transaction.recipientName} was successful!`);
-
-        // Refresh transactions
-        await fetchTransactions();
-
-        // Show transactions
-        setShowTransactions(true);
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          setSuccessMessage('');
+        }, 3000);
       }
     } catch (error) {
-      console.error('Error making payment:', error.response || error);
-      setSuccessMessage(
-        `Failed to make payment: ${error.response?.data?.message || error.message || 'Unknown error'}`
-      );
-    }
-  };
-
-  const handleTransfer = async (e) => {
-    e.preventDefault();
-    try {
-      const transaction = {
-        description: formData.description,
-        amount: parseFloat(formData.amount),
-        accountType: activeAccount,
-        type: 'TRANSFER',
-        toAccount: formData.toAccount
-      };
-
-      console.log('Sending transfer:', transaction);
-      const response = await axios.post('http://localhost:8080/api/transactions/transfer', transaction);
-      console.log('Transfer response:', response.data);
-      
-      if (response.data) {
-        // Reset form
-        setFormData({
-          amount: '',
-          description: '',
-          toAccount: '',
-          recipientName: '',
-          recipientAccountNumber: ''
-        });
-
-        // Show success message
-        setSuccessMessage(`Transfer of ${formatAmount(transaction.amount)} to your ${formData.toAccount} account was successful!`);
-
-        // Refresh transactions
-        await fetchTransactions();
-
-        // Show transactions
-        setShowTransactions(true);
-      }
-    } catch (error) {
-      console.error('Error making transfer:', error.response || error);
-      setSuccessMessage(
-        `Failed to make transfer: ${error.response?.data?.message || error.message || 'Unknown error'}`
-      );
+      console.error('Error submitting transaction:', error);
+      alert('Failed to process transaction. Please try again.');
     }
   };
 
@@ -449,7 +405,7 @@ function Transactions() {
                 {successMessage}
               </div>
             )}
-            <form onSubmit={activeOperation === 'pay' ? handlePay : handleTransfer} className="mx-auto" style={{ maxWidth: '600px' }}>
+            <form onSubmit={handleSubmit} className="mx-auto" style={{ maxWidth: '600px' }}>
               {activeOperation === 'transfer' ? (
                 <div className="mb-3">
                   <label className="form-label">To Account</label>
@@ -602,8 +558,11 @@ function Transactions() {
                     className="btn"
                     style={styles.button}
                     onClick={(e) => {
+                      e.stopPropagation(); // Prevent card click
+                      setActiveAccount('current');
                       setActiveOperation('pay');
-                      setActiveView(`${activeAccount}-operations`);
+                      setActiveView('current-operations');
+                      setShowTransactions(true);
                     }}
                   >
                     <CashStack className="me-2" />
@@ -613,8 +572,11 @@ function Transactions() {
                     className="btn"
                     style={styles.button}
                     onClick={(e) => {
+                      e.stopPropagation(); // Prevent card click
+                      setActiveAccount('current');
                       setActiveOperation('transfer');
-                      setActiveView(`${activeAccount}-operations`);
+                      setActiveView('current-operations');
+                      setShowTransactions(true);
                     }}
                   >
                     <ArrowLeftRight className="me-2" />
@@ -652,8 +614,11 @@ function Transactions() {
                     className="btn"
                     style={styles.button}
                     onClick={(e) => {
+                      e.stopPropagation(); // Prevent card click
+                      setActiveAccount('savings');
                       setActiveOperation('pay');
-                      setActiveView(`${activeAccount}-operations`);
+                      setActiveView('savings-operations');
+                      setShowTransactions(true);
                     }}
                   >
                     <CashStack className="me-2" />
@@ -663,8 +628,11 @@ function Transactions() {
                     className="btn"
                     style={styles.button}
                     onClick={(e) => {
+                      e.stopPropagation(); // Prevent card click
+                      setActiveAccount('savings');
                       setActiveOperation('transfer');
-                      setActiveView(`${activeAccount}-operations`);
+                      setActiveView('savings-operations');
+                      setShowTransactions(true);
                     }}
                   >
                     <ArrowLeftRight className="me-2" />
