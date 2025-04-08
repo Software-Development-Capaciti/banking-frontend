@@ -99,16 +99,33 @@ function Transactions() {
     }
   };
 
+  const fetchAccountBalances = async () => {
+    try {
+      console.log('Fetching account balances...');
+      const response = await axios.get('http://localhost:8080/api/dashboard');
+      console.log('Received balances:', response.data);
+      setAccountBalances({
+        current: response.data.currentBalance,
+        savings: response.data.savingsBalance
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    }
+  };
+
+  // Fetch balances when component mounts
   useEffect(() => {
+    console.log('Component mounted, fetching initial balances...');
     fetchAccountBalances();
   }, []);
 
+  // Fetch transactions when component mounts
   useEffect(() => {
-    if (transactions.length > 0) {
-      fetchAccountBalances();
-    }
-  }, [transactions]);
+    console.log('Component mounted, fetching initial transactions...');
+    fetchTransactions();
+  }, []);
 
+  // Fetch transactions when activeView changes
   useEffect(() => {
     if (activeView === 'transactions') {
       console.log('Active view is transactions, fetching...');
@@ -116,19 +133,8 @@ function Transactions() {
     }
   }, [activeView]);
 
+  // Reset form when operation changes
   useEffect(() => {
-    console.log('Component mounted, fetching initial transactions...');
-    fetchTransactions();
-  }, []);
-
-  useEffect(() => {
-    if (activeAccount) {
-      fetchTransactions();
-    }
-  }, [activeAccount]);
-
-  useEffect(() => {
-    // Reset form data when operation type changes
     setFormData({
       amount: '',
       description: '',
@@ -149,38 +155,6 @@ function Transactions() {
     } catch (error) {
       console.error('Error fetching transactions:', error);
       setTransactions([]);
-    }
-  };
-
-  const fetchAccountBalances = async () => {
-    try {
-      console.log('Fetching account balances...');
-      const response = await axios.get('http://localhost:8080/api/dashboard');
-      console.log('Received balances:', response.data);
-      setAccountBalances({
-        current: response.data.currentBalance,
-        savings: response.data.savingsBalance
-      });
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    }
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    if (name === 'toAccount') {
-      // Set recipient account number based on selected account
-      const recipientAccountNumber = value === 'current' ? '1234567890' : value === 'savings' ? '9876543210' : '';
-      setFormData(prev => ({
-        ...prev,
-        [name]: value,
-        recipientAccountNumber
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
     }
   };
 
@@ -227,12 +201,20 @@ function Transactions() {
       if (response.data) {
         // Get the new balance from the response
         const newBalance = response.data.balance;
+        console.log('New balance from response:', newBalance);
         
         // Update the account balances
-        setAccountBalances(prev => ({
-          ...prev,
-          [activeAccount]: newBalance
-        }));
+        setAccountBalances(prev => {
+          const updated = {
+            ...prev,
+            [activeAccount]: newBalance
+          };
+          console.log('Updated account balances:', updated);
+          return updated;
+        });
+
+        // Fetch latest balances from dashboard
+        await fetchAccountBalances();
         
         // Show success message with amount
         const message = activeOperation === 'deposit' 
@@ -266,6 +248,24 @@ function Transactions() {
     } catch (error) {
       console.error('Error:', error);
       alert(error.response?.data?.message || 'An error occurred');
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'toAccount') {
+      // Set recipient account number based on selected account
+      const recipientAccountNumber = value === 'current' ? '1234567890' : value === 'savings' ? '9876543210' : '';
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        recipientAccountNumber
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
     }
   };
 
