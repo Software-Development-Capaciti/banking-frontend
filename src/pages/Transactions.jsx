@@ -138,8 +138,9 @@ function Transactions() {
     console.log('Active operation:', activeOperation);
     console.log('Active account:', activeAccount);
     
+    let payload;
     try {
-      const payload = {
+      payload = {
         amount: parseFloat(formData.amount),
         description: formData.description,
         type: activeOperation === 'pay' ? 'debit' : 'transfer',
