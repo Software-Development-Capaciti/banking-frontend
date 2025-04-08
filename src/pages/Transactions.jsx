@@ -256,52 +256,85 @@ function Transactions() {
   };
 
   const renderTransactionHistory = () => {
+    const filteredTransactions = transactions.filter(t => t.accountType === activeAccount);
+
     return (
-      <div className="mt-4">
-        <div className="d-flex align-items-center mb-3">
-          <ClockHistory size={24} className="me-2 text-white" />
-          <h4 className="mb-0 text-white">Transaction History</h4>
+      <div className="card mt-4">
+        <div className="card-header">
+          <h5 className="mb-0">Transaction History</h5>
         </div>
-        <div className="card" style={styles.transactionCard}>
-          <div className="card-body p-0">
-            {transactions.length === 0 ? (
-              <div className="text-center text-muted p-4">
-                No transactions to display
-              </div>
-            ) : (
-              <div className="list-group list-group-flush">
-                {transactions.map((transaction, index) => (
-                  <div
-                    key={index}
-                    className="list-group-item"
-                    style={{
-                      ...styles.transactionItem,
-                      ...(hoveredTransaction === index ? styles.transactionItemHover : {})
-                    }}
-                    onMouseEnter={() => setHoveredTransaction(index)}
-                    onMouseLeave={() => setHoveredTransaction(null)}
-                  >
-                    <div className="d-flex justify-content-between align-items-start">
-                      <div>
-                        <h6 className="mb-1 text-white">
+        <div className="card-body">
+          {filteredTransactions.length === 0 ? (
+            <p className="text-muted text-center mb-0">No transactions yet</p>
+          ) : (
+            <div className="table-responsive">
+              <table className="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Type</th>
+                    <th className="text-end">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTransactions.map((transaction, index) => {
+                    const isDeposit = transaction.type === 'deposit';
+                    const isCredit = transaction.type === 'credit';
+                    const isDebit = transaction.type === 'debit';
+                    const isTransferOut = transaction.type === 'transfer';
+                    
+                    let amountColor = 'text-muted';
+                    let amountPrefix = '';
+                    
+                    if (isDeposit || isCredit) {
+                      amountColor = 'text-success';
+                      amountPrefix = '+';
+                    } else if (isDebit || isTransferOut) {
+                      amountColor = 'text-danger';
+                      amountPrefix = '-';
+                    }
+
+                    return (
+                      <tr key={index}>
+                        <td>{transaction.date}</td>
+                        <td>
                           {transaction.description}
-                        </h6>
-                        <small className="text-muted">
-                          {formatDate(transaction.date)}
-                        </small>
-                      </div>
-                      <div
-                        className={`text-${transaction.type === 'credit' ? 'success' : 'danger'}`}
-                        style={styles.transactionAmount}
-                      >
-                        {transaction.type === 'credit' ? '+' : '-'}{formatAmount(transaction.amount)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                          {transaction.recipientName && (
+                            <small className="text-muted d-block">
+                              To: {transaction.recipientName}
+                              {transaction.recipientAccountNumber && ` (${transaction.recipientAccountNumber})`}
+                            </small>
+                          )}
+                          {transaction.toAccount && (
+                            <small className="text-muted d-block">
+                              To: {transaction.toAccount === 'current' ? 'Current Account' : 'Savings Account'}
+                            </small>
+                          )}
+                        </td>
+                        <td>
+                          <span className={`badge ${
+                            isDeposit ? 'bg-success' :
+                            isCredit ? 'bg-success' :
+                            isDebit ? 'bg-danger' :
+                            'bg-primary'
+                          }`}>
+                            {isDeposit ? 'Money In' :
+                             isCredit ? 'Received' :
+                             isDebit ? 'Payment' :
+                             'Transfer'}
+                          </span>
+                        </td>
+                        <td className={`text-end ${amountColor}`}>
+                          {amountPrefix}{formatAmount(transaction.amount)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     );
