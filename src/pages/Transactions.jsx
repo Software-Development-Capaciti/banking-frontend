@@ -332,7 +332,20 @@ function Transactions() {
               <div className="d-flex align-items-center gap-3">
                 <button 
                   className="btn btn-link text-white p-0"
-                  onClick={() => setActiveView('accounts')}
+                  onClick={() => {
+                    setActiveView('accounts');
+                    setShowTransactions(false);
+                    setActiveAccount(null);
+                    setActiveOperation(null);
+                    setFormData({
+                      amount: '',
+                      description: '',
+                      toAccount: '',
+                      recipientName: '',
+                      recipientAccountNumber: ''
+                    });
+                    setSuccessMessage('');
+                  }}
                 >
                   ← Back
                 </button>
