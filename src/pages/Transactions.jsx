@@ -24,8 +24,8 @@ function Transactions() {
     recipientAccountNumber: ''
   });
   const [accountBalances, setAccountBalances] = useState({
-    current: 25000,
-    savings: 50000
+    current: 1000,
+    savings: 2000
   });
 
   const styles = {
@@ -224,6 +224,7 @@ function Transactions() {
   };
 
   const formatAmount = (amount) => {
+    if (!amount && amount !== 0) return 'R0.00';
     return new Intl.NumberFormat('en-ZA', {
       style: 'currency',
       currency: 'ZAR'
