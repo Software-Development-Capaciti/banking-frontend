@@ -176,30 +176,45 @@ function Transactions() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted');
-    console.log('Form data:', formData);
-    console.log('Active operation:', activeOperation);
-    console.log('Active account:', activeAccount);
     
-    let payload;
     try {
-      payload = {
-        amount: parseFloat(formData.amount),
-        description: formData.description,
-        type: activeOperation === 'pay' ? 'debit' : 'transfer',
-        accountType: activeAccount,
-        date: new Date().toISOString().split('T')[0],
-        recipientName: formData.recipientName,
-        recipientAccountNumber: formData.recipientAccountNumber,
-        toAccount: activeOperation === 'transfer' ? formData.toAccount : null
-      };
+      let endpoint;
+      let payload;
 
-      const endpoint = activeOperation === 'pay' ? '/api/transactions/pay' : '/api/transactions/transfer';
+      if (activeOperation === 'pay') {
+        endpoint = '/api/transactions/pay';
+        payload = {
+          accountType: activeAccount,
+          type: 'debit',
+          amount: parseFloat(formData.amount),
+          description: formData.description,
+          recipientName: formData.recipientName,
+          recipientAccountNumber: formData.recipientAccountNumber
+        };
+      } else if (activeOperation === 'transfer') {
+        endpoint = '/api/transactions/transfer';
+        payload = {
+          accountType: activeAccount,
+          type: 'transfer',
+          amount: parseFloat(formData.amount),
+          description: formData.description,
+          toAccount: formData.toAccount
+        };
+      } else if (activeOperation === 'deposit') {
+        endpoint = '/api/transactions/deposit';
+        payload = {
+          accountType: activeAccount,
+          type: 'deposit',
+          amount: parseFloat(formData.amount),
+          description: formData.description || 'Deposit'
+        };
+      }
+
       const response = await axios.post(`http://localhost:8080${endpoint}`, payload);
 
       if (response.data) {
         // Show success message
-        setSuccessMessage(`${activeOperation === 'pay' ? 'Payment' : 'Transfer'} successful!`);
+        setSuccessMessage(`${activeOperation === 'pay' ? 'Payment' : activeOperation === 'transfer' ? 'Transfer' : 'Deposit'} successful!`);
         
         // Clear form
         setFormData({
@@ -219,14 +234,8 @@ function Transactions() {
         }, 3000);
       }
     } catch (error) {
-      console.error('Error submitting transaction:', error);
-      console.error('Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        payload: payload
-      });
-      alert(`Failed to process transaction: ${error.message}`);
+      console.error('Error:', error);
+      alert(error.response?.data?.message || 'An error occurred');
     }
   };
 
@@ -356,7 +365,6 @@ function Transactions() {
     const accountColor = isCurrentAccount ? 'primary' : 'success';
     const accountIcon = isCurrentAccount ? <WalletFill size={24} /> : <Wallet2 size={24} />;
     const accountName = isCurrentAccount ? 'Current Account' : 'Savings Account';
-    const balance = isCurrentAccount ? accountBalances.current : accountBalances.savings;
 
     return (
       <div style={styles.container}>
@@ -389,13 +397,33 @@ function Transactions() {
                 </div>
               </div>
               <div>
-                <h5 className="mb-0">Available: {formatAmount(balance)}</h5>
+                <h5 className="mb-0">Available: {formatAmount(accountBalances[activeAccount])}</h5>
               </div>
             </div>
           </div>
           <div className="card-body">
             <div className="row g-4">
-              <div className="col-md-6">
+              <div className="col-md-4">
+                <div className="card h-100" 
+                  style={{
+                    ...styles.accountCard,
+                    ...(hoveredCard === 'deposit' ? styles.accountCardHover : {})
+                  }}
+                  onMouseEnter={() => setHoveredCard('deposit')}
+                  onMouseLeave={() => setHoveredCard(null)}
+                  onClick={() => {
+                    setActiveOperation('deposit');
+                    setActiveView(`${activeAccount}-operations`);
+                  }}
+                >
+                  <div className="card-body d-flex flex-column align-items-center justify-content-center text-center text-white">
+                    <CashStack size={48} className="text-#00C4B4 mb-3" />
+                    <h3 className="card-title mb-3">Deposit</h3>
+                    <p className="card-text text-muted">Add money to your {accountName.toLowerCase()}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="col-md-4">
                 <div className="card h-100" 
                   style={{
                     ...styles.accountCard,
@@ -415,7 +443,7 @@ function Transactions() {
                   </div>
                 </div>
               </div>
-              <div className="col-md-6">
+              <div className="col-md-4">
                 <div className="card h-100"
                   style={{
                     ...styles.accountCard,
@@ -448,20 +476,25 @@ function Transactions() {
     const accountColor = isCurrentAccount ? 'primary' : 'success';
     const accountIcon = isCurrentAccount ? <WalletFill size={24} /> : <Wallet2 size={24} />;
     const accountName = isCurrentAccount ? 'Current Account' : 'Savings Account';
-    const balance = isCurrentAccount ? accountBalances.current : accountBalances.savings;
 
     return (
       <div style={styles.formContainer}>
-        <div className="card">
+        <div className="card" style={styles.transactionCard}>
           <div className={`card-header bg-${accountColor} text-white`}>
-            <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
-              <div className="d-flex align-items-center gap-3">
+            <div className="d-flex align-items-center justify-content-between">
+              <div className="d-flex align-items-center">
                 <button 
-                  className="btn btn-link text-white p-0"
+                  className="btn btn-link text-white p-0 me-3"
                   onClick={() => {
                     setActiveView('transactions');
-                    setShowTransactions(false);
                     setActiveOperation(null);
+                    setFormData({
+                      amount: '',
+                      description: '',
+                      toAccount: '',
+                      recipientName: '',
+                      recipientAccountNumber: ''
+                    });
                     setSuccessMessage('');
                   }}
                 >
@@ -473,21 +506,24 @@ function Transactions() {
                 </div>
               </div>
               <div>
-                <h5 className="mb-0">Available: {formatAmount(balance)}</h5>
+                <h5 className="mb-0">Available: {formatAmount(accountBalances[activeAccount])}</h5>
               </div>
             </div>
           </div>
           <div className="card-body">
+            <h3 className="text-white mb-4">
+              {activeOperation === 'pay' ? 'Make a Payment' : 
+               activeOperation === 'transfer' ? 'Transfer Money' :
+               'Make a Deposit'}
+            </h3>
             {successMessage && (
-              <div className="alert" style={{ backgroundColor: '#00C4B4', color: 'white' }} role="alert">
-                {successMessage}
-              </div>
+              <div className="alert alert-success mb-4">{successMessage}</div>
             )}
-            <form onSubmit={handleSubmit} className="mx-auto" style={{ maxWidth: '600px' }}>
+            <form onSubmit={handleSubmit}>
               {activeOperation === 'transfer' ? (
                 <div className="mb-3">
                   <label className="form-label">To Account</label>
-                  <select 
+                  <select
                     className="form-select form-select-lg"
                     name="toAccount"
                     value={formData.toAccount}
@@ -503,7 +539,7 @@ function Transactions() {
                     )}
                   </select>
                 </div>
-              ) : (
+              ) : activeOperation === 'pay' ? (
                 <>
                   <div className="mb-3">
                     <label className="form-label">Recipient Name</label>
@@ -535,7 +571,7 @@ function Transactions() {
                     />
                   </div>
                 </>
-              )}
+              ) : null}
               <div className="mb-3">
                 <label className="form-label">Amount</label>
                 <div className="input-group input-group-lg">
@@ -561,8 +597,8 @@ function Transactions() {
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  required
-                  placeholder="Enter description"
+                  required={activeOperation !== 'deposit'}
+                  placeholder={activeOperation === 'deposit' ? 'Optional description' : 'Enter description'}
                   style={styles.input}
                 />
               </div>
@@ -571,12 +607,13 @@ function Transactions() {
                 className="btn btn-lg w-100"
                 style={{ ...styles.button, backgroundColor: '#00C4B4' }}
               >
-                {activeOperation === 'pay' ? 'Make Payment' : 'Transfer Money'}
+                {activeOperation === 'pay' ? 'Make Payment' : 
+                 activeOperation === 'transfer' ? 'Transfer Money' :
+                 'Make Deposit'}
               </button>
             </form>
           </div>
         </div>
-
       </div>
     );
   };
