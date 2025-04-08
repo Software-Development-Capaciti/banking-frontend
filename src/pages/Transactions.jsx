@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+
+// Configure axios
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+axios.defaults.headers.common['Accept'] = 'application/json';
+axios.defaults.withCredentials = true;
 import { CashStack, ArrowLeftRight, WalletFill, Wallet2, ClockHistory, ArrowLeft } from 'react-bootstrap-icons';
 
 function Transactions() {
@@ -141,11 +146,14 @@ function Transactions() {
         toAccount: activeOperation === 'transfer' ? formData.toAccount : null
       };
 
-      const endpoint = activeOperation === 'pay' ? 'pay' : 'transfer';
-      const response = await axios.post(`http://localhost:8080/api/transactions/${endpoint}`, payload);
+      const endpoint = activeOperation === 'pay' ? '/api/transactions/pay' : '/api/transactions/transfer';
+      const response = await axios.post(`http://localhost:8080${endpoint}`, payload);
 
       if (response.data) {
+        // Show success message
         setSuccessMessage(`${activeOperation === 'pay' ? 'Payment' : 'Transfer'} successful!`);
+        
+        // Clear form
         setFormData({
           amount: '',
           description: '',
@@ -153,6 +161,8 @@ function Transactions() {
           recipientName: '',
           recipientAccountNumber: ''
         });
+
+        // Refresh transactions
         fetchTransactions();
 
         // Clear success message after 3 seconds
@@ -162,7 +172,13 @@ function Transactions() {
       }
     } catch (error) {
       console.error('Error submitting transaction:', error);
-      alert('Failed to process transaction. Please try again.');
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        payload: payload
+      });
+      alert(`Failed to process transaction: ${error.message}`);
     }
   };
 
