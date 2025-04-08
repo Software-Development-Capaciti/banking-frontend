@@ -528,24 +528,17 @@ function Transactions() {
                   value={formData.description}
                   onChange={handleInputChange}
                   required
-                  placeholder="Enter a description for this transaction"
+                  placeholder="Enter description"
                   style={styles.input}
                 />
               </div>
-              <div className="d-grid">
-                <button 
-                  type="submit" 
-                  className="btn btn-lg"
-                  style={{
-                    ...styles.button,
-                    ...(hoveredCard === 'submit' ? styles.buttonHover : {})
-                  }}
-                  onMouseEnter={() => setHoveredCard('submit')}
-                  onMouseLeave={() => setHoveredCard(null)}
-                >
-                  {activeOperation === 'pay' ? 'Pay' : 'Transfer'}
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="btn btn-lg w-100"
+                style={{ ...styles.button, backgroundColor: '#00C4B4' }}
+              >
+                {activeOperation === 'pay' ? 'Make Payment' : 'Transfer Money'}
+              </button>
             </form>
           </div>
         </div>
