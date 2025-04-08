@@ -5,7 +5,7 @@ import axios from 'axios';
 axios.defaults.headers.common['Content-Type'] = 'application/json';
 axios.defaults.headers.common['Accept'] = 'application/json';
 axios.defaults.withCredentials = true;
-import { CashStack, ArrowLeftRight, WalletFill, Wallet2, ClockHistory, ArrowLeft } from 'react-bootstrap-icons';
+import { CashStack, ArrowLeftRight, WalletFill, Wallet2, ClockHistory, ArrowLeft, CheckCircleFill } from 'react-bootstrap-icons';
 
 function Transactions() {
   const [transactions, setTransactions] = useState([]);
@@ -156,6 +156,18 @@ function Transactions() {
     }
   };
 
+  const fetchAccountBalances = async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/api/dashboard');
+      setAccountBalances({
+        current: response.data.currentBalance,
+        savings: response.data.savingsBalance
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name === 'toAccount') {
@@ -213,8 +225,12 @@ function Transactions() {
       const response = await axios.post(`http://localhost:8080${endpoint}`, payload);
 
       if (response.data) {
-        // Show success message
-        setSuccessMessage(`${activeOperation === 'pay' ? 'Payment' : activeOperation === 'transfer' ? 'Transfer' : 'Deposit'} successful!`);
+        // Show success message with amount
+        const message = activeOperation === 'deposit' 
+          ? `Successfully deposited ${formatAmount(payload.amount)}. New balance: ${formatAmount(accountBalances.current + payload.amount)}`
+          : `${activeOperation === 'pay' ? 'Payment' : 'Transfer'} successful!`;
+        
+        setSuccessMessage(message);
         
         // Clear form
         setFormData({
@@ -225,13 +241,16 @@ function Transactions() {
           recipientAccountNumber: ''
         });
 
-        // Refresh transactions
-        fetchTransactions();
+        // Refresh transactions and balances
+        await Promise.all([
+          fetchTransactions(),
+          fetchAccountBalances()
+        ]);
 
-        // Clear success message after 3 seconds
+        // Clear success message after 5 seconds (increased from 3)
         setTimeout(() => {
           setSuccessMessage('');
-        }, 3000);
+        }, 5000);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -551,7 +570,12 @@ function Transactions() {
                'Make a Deposit'}
             </h3>
             {successMessage && (
-              <div className="alert alert-success mb-4">{successMessage}</div>
+              <div className="alert alert-success mb-4">
+                <div className="d-flex align-items-center">
+                  <CheckCircleFill className="me-2" />
+                  {successMessage}
+                </div>
+              </div>
             )}
             <form onSubmit={handleSubmit}>
               {activeOperation === 'transfer' ? (
@@ -567,9 +591,9 @@ function Transactions() {
                   >
                     <option value="">Select account</option>
                     {activeAccount === 'current' ? (
-                      <option value="savings" onClick={() => setFormData(prev => ({ ...prev, recipientAccountNumber: '9876543210' }))}>Savings Account (9876543210)</option>
+                      <option value="savings">Savings Account</option>
                     ) : (
-                      <option value="current" onClick={() => setFormData(prev => ({ ...prev, recipientAccountNumber: '1234567890' }))}>Current Account (1234567890)</option>
+                      <option value="current">Current Account</option>
                     )}
                   </select>
                 </div>
@@ -622,6 +646,11 @@ function Transactions() {
                     style={styles.input}
                   />
                 </div>
+                {activeOperation === 'deposit' && (
+                  <div className="form-text text-white-50 mt-2">
+                    Current balance: {formatAmount(accountBalances.current)}
+                  </div>
+                )}
               </div>
               <div className="mb-4">
                 <label className="form-label">Description</label>
