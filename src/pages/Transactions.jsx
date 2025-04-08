@@ -307,58 +307,79 @@ function Transactions() {
     );
   };
 
-  const renderAccountsView = () => (
-    <div className="row g-4">
-      <div className="col-md-6">
-        <div 
-          className="card h-100"
-          style={{
-            ...styles.accountCard,
-            ...(hoveredCard === 'current' ? styles.accountCardHover : {})
-          }}
-          onMouseEnter={() => setHoveredCard('current')}
-          onMouseLeave={() => setHoveredCard(null)}
-          onClick={() => {
-            setActiveAccount('current');
-            setActiveView('transactions');
-            setShowTransactions(true);
-            fetchTransactions();
-          }}
-        >
-          <div className="card-body d-flex flex-column align-items-center justify-content-center text-center text-white">
-            <WalletFill size={48} className="text-#00C4B4 mb-3" />
-            <h3 className="card-title mb-3">Current Account</h3>
-            <h4 className="text-#00C4B4 mb-3">{formatAmount(accountBalances.current)}</h4>
-            <p className="card-text text-muted">Your everyday spending account</p>
+  const renderAccountsView = () => {
+    return (
+      <div>
+        <div className="row g-4 mb-4">
+          <div className="col-12">
+            <div className="card h-100" 
+              style={{
+                ...styles.accountCard,
+                ...(hoveredCard === 'deposit' ? styles.accountCardHover : {})
+              }}
+              onMouseEnter={() => setHoveredCard('deposit')}
+              onMouseLeave={() => setHoveredCard(null)}
+              onClick={() => {
+                setActiveOperation('deposit');
+                setActiveAccount('current');
+                setActiveView('current-operations');
+              }}
+            >
+              <div className="card-body d-flex flex-column align-items-center justify-content-center text-center text-white">
+                <CashStack size={48} className="text-#00C4B4 mb-3" />
+                <h3 className="card-title mb-3">Deposit Money</h3>
+                <p className="card-text text-muted">Add money to your current account</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="row g-4">
+          <div className="col-md-6">
+            <div className="card h-100" 
+              style={{
+                ...styles.accountCard,
+                ...(hoveredCard === 'current' ? styles.accountCardHover : {})
+              }}
+              onMouseEnter={() => setHoveredCard('current')}
+              onMouseLeave={() => setHoveredCard(null)}
+              onClick={() => {
+                setActiveAccount('current');
+                setActiveView('transactions');
+              }}
+            >
+              <div className="card-body d-flex flex-column align-items-center justify-content-center text-center text-white">
+                <WalletFill size={48} className="text-#00C4B4 mb-3" />
+                <h3 className="card-title mb-3">Current Account</h3>
+                <h4 className="text-#00C4B4 mb-3">{formatAmount(accountBalances.current)}</h4>
+                <p className="card-text text-muted">Your everyday spending account</p>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-6">
+            <div className="card h-100"
+              style={{
+                ...styles.accountCard,
+                ...(hoveredCard === 'savings' ? styles.accountCardHover : {})
+              }}
+              onMouseEnter={() => setHoveredCard('savings')}
+              onMouseLeave={() => setHoveredCard(null)}
+              onClick={() => {
+                setActiveAccount('savings');
+                setActiveView('transactions');
+              }}
+            >
+              <div className="card-body d-flex flex-column align-items-center justify-content-center text-center text-white">
+                <Wallet2 size={48} className="text-#00C4B4 mb-3" />
+                <h3 className="card-title mb-3">Savings Account</h3>
+                <h4 className="text-#00C4B4 mb-3">{formatAmount(accountBalances.savings)}</h4>
+                <p className="card-text text-muted">Your long-term savings account</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <div className="col-md-6">
-        <div 
-          className="card h-100"
-          style={{
-            ...styles.accountCard,
-            ...(hoveredCard === 'savings' ? styles.accountCardHover : {})
-          }}
-          onMouseEnter={() => setHoveredCard('savings')}
-          onMouseLeave={() => setHoveredCard(null)}
-          onClick={() => {
-            setActiveAccount('savings');
-            setActiveView('transactions');
-            setShowTransactions(true);
-            fetchTransactions();
-          }}
-        >
-          <div className="card-body d-flex flex-column align-items-center justify-content-center text-center text-white">
-            <Wallet2 size={48} className="text-#00C4B4 mb-3" />
-            <h3 className="card-title mb-3">Savings Account</h3>
-            <h4 className="text-#00C4B4 mb-3">{formatAmount(accountBalances.savings)}</h4>
-            <p className="card-text text-muted">Your long-term savings account</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderTransactionsView = () => {
     const isCurrentAccount = activeAccount === 'current';
@@ -403,27 +424,7 @@ function Transactions() {
           </div>
           <div className="card-body">
             <div className="row g-4">
-              <div className="col-md-4">
-                <div className="card h-100" 
-                  style={{
-                    ...styles.accountCard,
-                    ...(hoveredCard === 'deposit' ? styles.accountCardHover : {})
-                  }}
-                  onMouseEnter={() => setHoveredCard('deposit')}
-                  onMouseLeave={() => setHoveredCard(null)}
-                  onClick={() => {
-                    setActiveOperation('deposit');
-                    setActiveView(`${activeAccount}-operations`);
-                  }}
-                >
-                  <div className="card-body d-flex flex-column align-items-center justify-content-center text-center text-white">
-                    <CashStack size={48} className="text-#00C4B4 mb-3" />
-                    <h3 className="card-title mb-3">Deposit</h3>
-                    <p className="card-text text-muted">Add money to your {accountName.toLowerCase()}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="col-md-4">
+              <div className="col-md-6">
                 <div className="card h-100" 
                   style={{
                     ...styles.accountCard,
@@ -443,7 +444,7 @@ function Transactions() {
                   </div>
                 </div>
               </div>
-              <div className="col-md-4">
+              <div className="col-md-6">
                 <div className="card h-100"
                   style={{
                     ...styles.accountCard,
