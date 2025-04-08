@@ -100,6 +100,12 @@ function Transactions() {
   };
 
   useEffect(() => {
+    if (activeView === 'transactions') {
+      fetchTransactions();
+    }
+  }, [activeView]);
+
+  useEffect(() => {
     if (activeAccount) {
       fetchTransactions();
     }
@@ -135,7 +141,8 @@ function Transactions() {
 
   const fetchTransactions = async () => {
     try {
-      const response = await axios.get(`http://localhost:8080/api/transactions/${activeAccount}`);
+      let endpoint = activeAccount ? `/api/transactions/${activeAccount}` : '/api/transactions';
+      const response = await axios.get(`http://localhost:8080${endpoint}`);
       setTransactions(response.data);
       // Update balances after transaction
       const dashResponse = await axios.get('http://localhost:8080/api/dashboard');
