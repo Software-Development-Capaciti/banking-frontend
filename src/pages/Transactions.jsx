@@ -111,9 +111,15 @@ function Transactions() {
 
   useEffect(() => {
     if (activeView === 'transactions') {
+      console.log('Active view is transactions, fetching...');
       fetchTransactions();
     }
   }, [activeView]);
+
+  useEffect(() => {
+    console.log('Component mounted, fetching initial transactions...');
+    fetchTransactions();
+  }, []);
 
   useEffect(() => {
     if (activeAccount) {
@@ -135,9 +141,11 @@ function Transactions() {
 
   const fetchTransactions = async () => {
     try {
-      let endpoint = activeAccount ? `/api/transactions/${activeAccount}` : '/api/transactions';
-      const response = await axios.get(`http://localhost:8080${endpoint}`);
+      console.log('Fetching transactions...');
+      const response = await axios.get('http://localhost:8080/api/transactions');
+      console.log('Received transactions:', response.data);
       setTransactions(response.data);
+      setShowTransactions(true);
     } catch (error) {
       console.error('Error fetching transactions:', error);
       setTransactions([]);
@@ -242,8 +250,13 @@ function Transactions() {
           recipientAccountNumber: ''
         });
 
-        // Refresh transactions
+        // Refresh transactions immediately
+        console.log('Transaction successful, refreshing history...');
         await fetchTransactions();
+
+        // Go back to transactions view after success
+        setActiveView('transactions');
+        setShowTransactions(true);
 
         // Clear success message after 5 seconds
         setTimeout(() => {
