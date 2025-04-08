@@ -527,7 +527,6 @@ function Transactions() {
           </div>
         </div>
 
-        {showTransactions && renderTransactionHistory()}
       </div>
     );
   };
