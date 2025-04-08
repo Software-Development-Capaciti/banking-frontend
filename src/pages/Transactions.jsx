@@ -208,92 +208,71 @@ function Transactions() {
     e.preventDefault();
     
     try {
-      let endpoint;
       let payload;
-
+      let endpoint;
+      
       if (activeOperation === 'pay') {
-        endpoint = '/api/transactions/pay';
         payload = {
+          description: formData.description,
+          amount: parseFloat(formData.amount),
           accountType: activeAccount,
           type: 'debit',
-          amount: parseFloat(formData.amount),
-          description: formData.description,
           recipientName: formData.recipientName,
           recipientAccountNumber: formData.recipientAccountNumber
         };
+        endpoint = 'pay';
       } else if (activeOperation === 'transfer') {
-        endpoint = '/api/transactions/transfer';
         payload = {
+          description: `Transfer to ${formData.toAccount === 'current' ? 'Current' : 'Savings'} Account`,
+          amount: parseFloat(formData.amount),
           accountType: activeAccount,
           type: 'transfer',
-          amount: parseFloat(formData.amount),
-          description: formData.description,
           toAccount: formData.toAccount
         };
+        endpoint = 'transfer';
       } else if (activeOperation === 'deposit') {
-        endpoint = '/api/transactions/deposit';
         payload = {
-          accountType: activeAccount,
-          type: 'deposit',
+          description: formData.description || 'Cash Deposit',
           amount: parseFloat(formData.amount),
-          description: formData.description || 'Deposit'
+          accountType: activeAccount,
+          type: 'deposit'
         };
+        endpoint = 'deposit';
       }
-
-      console.log('Sending request:', { endpoint, payload });
-      const response = await axios.post(`http://localhost:8080${endpoint}`, payload);
-      console.log('Received response:', response.data);
-
-      if (response.data) {
-        // Get the new balance from the response
-        const newBalance = response.data.balance;
-        console.log('New balance from response:', newBalance);
-        
-        // Update the account balances
-        setAccountBalances(prev => {
-          const updated = {
-            ...prev,
-            [activeAccount]: newBalance
-          };
-          console.log('Updated account balances:', updated);
-          return updated;
-        });
-
-        // Fetch latest balances from dashboard to ensure we're in sync
-        await fetchAccountBalances();
-        
-        // Show success message with amount
-        const message = activeOperation === 'deposit' 
-          ? `Successfully deposited ${formatAmount(payload.amount)}. New balance: ${formatAmount(newBalance)}`
-          : `${activeOperation === 'pay' ? 'Payment' : 'Transfer'} successful!`;
-        
-        setSuccessMessage(message);
-        
-        // Clear form
-        setFormData({
-          amount: '',
-          description: '',
-          toAccount: '',
-          recipientName: '',
-          recipientAccountNumber: ''
-        });
-
-        // Refresh transactions immediately
-        console.log('Transaction successful, refreshing history...');
-        await fetchTransactions();
-
-        // Go back to transactions view after success
-        setActiveView('transactions');
-        setShowTransactions(true);
-
-        // Clear success message after 5 seconds
-        setTimeout(() => {
-          setSuccessMessage('');
-        }, 5000);
-      }
+      
+      console.log('Sending payload:', payload);
+      
+      const response = await axios.post(`http://localhost:8080/api/transactions/${endpoint}`, payload);
+      console.log('Transaction response:', response.data);
+      
+      // Reset form
+      setFormData({
+        amount: '',
+        description: '',
+        toAccount: '',
+        recipientName: '',
+        recipientAccountNumber: ''
+      });
+      
+      // Show success message
+      setSuccessMessage(
+        activeOperation === 'pay' ? 'Payment sent successfully!' :
+        activeOperation === 'transfer' ? 'Transfer completed successfully!' :
+        'Deposit completed successfully!'
+      );
+      
+      // Refresh account balances and transactions
+      fetchAccountBalances();
+      fetchTransactions();
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000);
+      
     } catch (error) {
-      console.error('Error:', error);
-      alert(error.response?.data?.message || 'An error occurred');
+      console.error('Error processing transaction:', error);
+      alert(`Error: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -675,7 +654,25 @@ function Transactions() {
               </div>
               
               <div className="row">
-                <div className="col-md-6 mb-3">
+                <div className="col-md-4 mb-3">
+                  <button
+                    className="btn w-100"
+                    style={{
+                      ...styles.accountCard,
+                      textAlign: 'left',
+                      border: 'none',
+                      height: '100%',
+                      minHeight: '100px'
+                    }}
+                    onClick={() => {
+                      setActiveOperation('deposit');
+                    }}
+                  >
+                    <CashStack size={24} color="#00C4B4" style={{ marginBottom: '0.5rem' }} />
+                    <h5 style={{ color: '#fff', marginBottom: '0.5rem' }}>Deposit</h5>
+                  </button>
+                </div>
+                <div className="col-md-4 mb-3">
                   <button
                     className="btn w-100"
                     style={{
@@ -693,7 +690,7 @@ function Transactions() {
                     <h5 style={{ color: '#fff', marginBottom: '0.5rem' }}>Transfer</h5>
                   </button>
                 </div>
-                <div className="col-md-6 mb-3">
+                <div className="col-md-4 mb-3">
                   <button
                     className="btn w-100"
                     style={{
@@ -803,7 +800,9 @@ function Transactions() {
                 className="btn btn-lg w-100"
                 style={{ ...styles.button, backgroundColor: '#00C4B4' }}
               >
-                {activeOperation === 'pay' ? 'Make Payment' : 'Transfer Money'}
+                {activeOperation === 'pay' ? 'Make Payment' : 
+                 activeOperation === 'transfer' ? 'Transfer Money' :
+                 'Make Deposit'}
               </button>
             </form>
           )}
