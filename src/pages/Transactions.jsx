@@ -133,6 +133,10 @@ function Transactions() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Form submitted');
+    console.log('Form data:', formData);
+    console.log('Active operation:', activeOperation);
+    console.log('Active account:', activeAccount);
     
     try {
       const payload = {
@@ -507,8 +511,13 @@ function Transactions() {
               <div className="d-grid">
                 <button 
                   type="submit" 
-                  className={`btn ${styles.button}`}
-                  style={{ ...styles.button, ':hover': styles.buttonHover }}
+                  className="btn btn-lg"
+                  style={{
+                    ...styles.button,
+                    ...(hoveredCard === 'submit' ? styles.buttonHover : {})
+                  }}
+                  onMouseEnter={() => setHoveredCard('submit')}
+                  onMouseLeave={() => setHoveredCard(null)}
                 >
                   {activeOperation === 'pay' ? 'Pay' : 'Transfer'}
                 </button>
