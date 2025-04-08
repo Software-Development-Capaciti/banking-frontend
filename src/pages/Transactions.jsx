@@ -457,7 +457,7 @@ function Transactions() {
                   onClick={() => {
                     setActiveAccount('current');
                     setActiveOperation('deposit');
-                    setActiveView('operations-deposit');
+                    setActiveView('operations-current');
                   }}
                 >
                   <CashStack size={24} color="#00C4B4" style={{ marginBottom: '0.5rem' }} />
@@ -480,7 +480,7 @@ function Transactions() {
                   onClick={() => {
                     setActiveAccount('current');
                     setActiveOperation('transfer');
-                    setActiveView('operations-transfer');
+                    setActiveView('operations-current');
                   }}
                 >
                   <ArrowLeftRight size={24} color="#00C4B4" style={{ marginBottom: '0.5rem' }} />
@@ -503,7 +503,7 @@ function Transactions() {
                   onClick={() => {
                     setActiveAccount('current');
                     setActiveOperation('pay');
-                    setActiveView('operations-pay');
+                    setActiveView('operations-current');
                   }}
                 >
                   <WalletFill size={24} color="#00C4B4" style={{ marginBottom: '0.5rem' }} />
