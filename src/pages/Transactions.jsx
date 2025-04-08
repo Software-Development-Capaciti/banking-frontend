@@ -125,10 +125,20 @@ function Transactions() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    if (name === 'toAccount') {
+      // Set recipient account number based on selected account
+      const recipientAccountNumber = value === 'current' ? '1234567890' : value === 'savings' ? '9876543210' : '';
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        recipientAccountNumber
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -440,9 +450,9 @@ function Transactions() {
                   >
                     <option value="">Select account</option>
                     {activeAccount === 'current' ? (
-                      <option value="savings">Savings Account</option>
+                      <option value="savings" onClick={() => setFormData(prev => ({ ...prev, recipientAccountNumber: '9876543210' }))}>Savings Account (9876543210)</option>
                     ) : (
-                      <option value="current">Current Account</option>
+                      <option value="current" onClick={() => setFormData(prev => ({ ...prev, recipientAccountNumber: '1234567890' }))}>Current Account (1234567890)</option>
                     )}
                   </select>
                 </div>
@@ -632,7 +642,7 @@ function Transactions() {
                   <Wallet2 size={24} className="me-2 text-#00C4B4" />
                   <h5 className="mb-0">Savings Account</h5>
                 </div>
-                <p className="text-muted mb-3">Account Number: 0987654321</p>
+                <p className="text-muted mb-3">Account Number: 9876543210</p>
                 <h3 className="mb-4">{formatAmount(50000)}</h3>
                 <div className="d-flex gap-2">
                   <button
