@@ -138,25 +138,31 @@ function Transactions() {
     }
   };
 
+  // Fetch balances when component mounts and when activeView changes
+  useEffect(() => {
+    console.log('Fetching initial balances...');
+    fetchAccountBalances();
+  }, []);
+
+  useEffect(() => {
+    console.log('View changed to:', activeView);
+    fetchAccountBalances();
+  }, [activeView]);
+
   const fetchAccountBalances = async () => {
     try {
       console.log('Fetching account balances...');
       const response = await axios.get('http://localhost:8080/api/dashboard');
-      console.log('Received balances:', response.data);
+      console.log('Received dashboard data:', response.data);
+      
       setAccountBalances({
         current: response.data.currentBalance,
         savings: response.data.savingsBalance
       });
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('Error fetching account balances:', error);
     }
   };
-
-  // Fetch balances when component mounts
-  useEffect(() => {
-    console.log('Component mounted, fetching initial balances...');
-    fetchAccountBalances();
-  }, []);
 
   // Fetch transactions when component mounts
   useEffect(() => {
@@ -252,7 +258,7 @@ function Transactions() {
           return updated;
         });
 
-        // Fetch latest balances from dashboard
+        // Fetch latest balances from dashboard to ensure we're in sync
         await fetchAccountBalances();
         
         // Show success message with amount
@@ -325,94 +331,50 @@ function Transactions() {
   };
 
   const renderTransactionHistory = () => {
-    if (!showTransactions) return null;
-
-    const filteredTransactions = transactions.filter(t => t.accountType === activeAccount);
+    if (!showTransactions) {
+      return null;
+    }
 
     return (
       <div style={styles.transactionHistory}>
-        <div style={styles.currentAccountCard}>
-          <h3>Current Account</h3>
-          <p style={styles.accountNumber}>**** 7890</p>
-          <div style={styles.balanceSection}>
-            <p style={styles.balanceLabel}>Available Balance</p>
-            <p style={styles.balanceAmount}>{formatAmount(accountBalances.current)}</p>
-          </div>
-        </div>
         <div style={styles.transactionHeader}>
           <h2>Transaction History</h2>
         </div>
-        {filteredTransactions.length === 0 ? (
-          <p className="text-muted text-center mb-0">No transactions yet</p>
-        ) : (
-          <div className="table-responsive">
-            <table className="table table-hover">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Description</th>
-                  <th>Type</th>
-                  <th className="text-end">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTransactions.map((transaction, index) => {
-                  const isDeposit = transaction.type === 'deposit';
-                  const isCredit = transaction.type === 'credit';
-                  const isDebit = transaction.type === 'debit';
-                  const isTransferOut = transaction.type === 'transfer';
-                  
-                  let amountColor = 'text-muted';
-                  let amountPrefix = '';
-                  
-                  if (isDeposit || isCredit) {
-                    amountColor = 'text-success';
-                    amountPrefix = '+';
-                  } else if (isDebit || isTransferOut) {
-                    amountColor = 'text-danger';
-                    amountPrefix = '-';
-                  }
-
-                  return (
-                    <tr key={index}>
-                      <td>{transaction.date}</td>
-                      <td>
-                        {transaction.description}
-                        {transaction.recipientName && (
-                          <small className="text-muted d-block">
-                            To: {transaction.recipientName}
-                            {transaction.recipientAccountNumber && ` (${transaction.recipientAccountNumber})`}
-                          </small>
-                        )}
-                        {transaction.toAccount && (
-                          <small className="text-muted d-block">
-                            To: {transaction.toAccount === 'current' ? 'Current Account' : 'Savings Account'}
-                          </small>
-                        )}
-                      </td>
-                      <td>
-                        <span className={`badge ${
-                          isDeposit ? 'bg-success' :
-                          isCredit ? 'bg-success' :
-                          isDebit ? 'bg-danger' :
-                          'bg-primary'
-                        }`}>
-                          {isDeposit ? 'Money In' :
-                           isCredit ? 'Received' :
-                           isDebit ? 'Payment' :
-                           'Transfer'}
-                        </span>
-                      </td>
-                      <td className={`text-end ${amountColor}`}>
-                        {amountPrefix}{formatAmount(transaction.amount)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <div>
+          {transactions.length === 0 ? (
+            <div className="text-center py-4">
+              <p className="text-muted">No transactions found.</p>
+            </div>
+          ) : (
+            <div>
+              {transactions.map((transaction, index) => (
+                <div
+                  key={index}
+                  style={{
+                    ...styles.transactionItem,
+                    ...(hoveredTransaction === index ? styles.transactionItemHover : {}),
+                    borderLeftColor: transaction.type === 'credit' || transaction.type === 'deposit' ? '#28a745' : '#dc3545'
+                  }}
+                  onMouseEnter={() => setHoveredTransaction(index)}
+                  onMouseLeave={() => setHoveredTransaction(null)}
+                >
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div>
+                      <p className="mb-1 fw-bold">{transaction.description}</p>
+                      <p className="text-muted small mb-0">{formatDate(transaction.date)}</p>
+                    </div>
+                    <div style={styles.transactionAmount}>
+                      <p className={`mb-0 fw-bold ${transaction.type === 'credit' || transaction.type === 'deposit' ? 'text-success' : 'text-danger'}`}>
+                        {transaction.type === 'credit' || transaction.type === 'deposit' ? '+' : '-'}{formatAmount(transaction.amount)}
+                      </p>
+                      <p className="text-muted small mb-0">Balance: {formatAmount(transaction.balance)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -426,7 +388,15 @@ function Transactions() {
               <h2 style={{ color: '#fff', marginBottom: '1rem' }}>Account Overview</h2>
               <div className="row">
                 <div className="col-md-6 mb-4">
-                  <div style={styles.accountCard}>
+                  <div 
+                    style={styles.accountCard}
+                    onClick={() => {
+                      setActiveAccount('current');
+                      setActiveOperation(null);
+                      setActiveView('operations-current');
+                      fetchTransactions();
+                    }}
+                  >
                     <h3 style={{ color: '#fff', marginBottom: '1rem' }}>Current Account</h3>
                     <p style={{ color: '#aaa', marginBottom: '0.5rem' }}>**** 7890</p>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -438,7 +408,15 @@ function Transactions() {
                   </div>
                 </div>
                 <div className="col-md-6 mb-4">
-                  <div style={styles.accountCard}>
+                  <div 
+                    style={styles.accountCard}
+                    onClick={() => {
+                      setActiveAccount('savings');
+                      setActiveOperation(null);
+                      setActiveView('operations-savings');
+                      fetchTransactions();
+                    }}
+                  >
                     <h3 style={{ color: '#fff', marginBottom: '1rem' }}>Savings Account</h3>
                     <p style={{ color: '#aaa', marginBottom: '0.5rem' }}>**** 3210</p>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -626,62 +604,92 @@ function Transactions() {
   };
 
   const renderOperationsView = () => {
+    if (!activeAccount) return null;
+
     const isCurrentAccount = activeAccount === 'current';
-    const accountColor = isCurrentAccount ? 'primary' : 'success';
-    const accountIcon = isCurrentAccount ? <WalletFill size={24} /> : <Wallet2 size={24} />;
-    const accountName = isCurrentAccount ? 'Current Account' : 'Savings Account';
+    const accountBalance = isCurrentAccount ? accountBalances.current : accountBalances.savings;
+    const accountType = isCurrentAccount ? 'Current' : 'Savings';
+    const accountNumber = isCurrentAccount ? '1234567890' : '9876543210';
 
     return (
-      <div style={styles.formContainer}>
-        <div className="card" style={styles.transactionCard}>
-          <div className={`card-header bg-${accountColor} text-white`}>
-            <div className="d-flex align-items-center justify-content-between">
-              <div className="d-flex align-items-center">
-                <button 
-                  className="btn btn-link text-white p-0 me-3"
-                  onClick={() => {
-                    setActiveView('transactions');
-                    setActiveOperation(null);
-                    setFormData({
-                      amount: '',
-                      description: '',
-                      toAccount: '',
-                      recipientName: '',
-                      recipientAccountNumber: ''
-                    });
-                    setSuccessMessage('');
-                  }}
-                >
-                  ← Back
-                </button>
-                <div className="d-flex align-items-center">
-                  {accountIcon}
-                  <h5 className="mb-0 ms-2">{accountName}</h5>
+      <div className="card" style={styles.formContainer}>
+        <div className="card-body">
+          <div className="d-flex align-items-center mb-4">
+            <button
+              className="btn btn-outline-light me-3"
+              onClick={() => {
+                setActiveView('accounts');
+                setActiveAccount(null);
+                setActiveOperation(null);
+              }}
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <h3 className="mb-0 text-white">{activeOperation ? `${activeOperation.charAt(0).toUpperCase() + activeOperation.slice(1)}` : `${accountType} Account`}</h3>
+          </div>
+
+          {successMessage && (
+            <div className="alert alert-success d-flex align-items-center mb-4" role="alert">
+              <CheckCircleFill className="me-2" />
+              <div>{successMessage}</div>
+            </div>
+          )}
+
+          {!activeOperation ? (
+            <div>
+              <div className="card mb-4" style={{ backgroundColor: '#2A3B3C', border: 'none', borderRadius: '10px' }}>
+                <div className="card-body">
+                  <h4 className="text-white mb-2">{accountType} Account</h4>
+                  <p className="text-muted mb-2">Account Number: {accountNumber}</p>
+                  <h3 className="text-white mb-0">{formatAmount(accountBalance)}</h3>
+                  <small className="text-muted">Available Balance</small>
                 </div>
               </div>
-              <div>
-                <h5 className="mb-0">Available: {formatAmount(accountBalances[activeAccount])}</h5>
+              
+              <div className="row">
+                <div className="col-md-6 mb-3">
+                  <button
+                    className="btn w-100"
+                    style={{
+                      ...styles.accountCard,
+                      textAlign: 'left',
+                      border: 'none',
+                      height: '100%',
+                      minHeight: '100px'
+                    }}
+                    onClick={() => {
+                      setActiveOperation('transfer');
+                    }}
+                  >
+                    <ArrowLeftRight size={24} color="#00C4B4" style={{ marginBottom: '0.5rem' }} />
+                    <h5 style={{ color: '#fff', marginBottom: '0.5rem' }}>Transfer</h5>
+                  </button>
+                </div>
+                <div className="col-md-6 mb-3">
+                  <button
+                    className="btn w-100"
+                    style={{
+                      ...styles.accountCard,
+                      textAlign: 'left',
+                      border: 'none',
+                      height: '100%',
+                      minHeight: '100px'
+                    }}
+                    onClick={() => {
+                      setActiveOperation('pay');
+                    }}
+                  >
+                    <WalletFill size={24} color="#00C4B4" style={{ marginBottom: '0.5rem' }} />
+                    <h5 style={{ color: '#fff', marginBottom: '0.5rem' }}>Pay</h5>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="card-body">
-            <h3 className="text-white mb-4">
-              {activeOperation === 'pay' ? 'Make a Payment' : 
-               activeOperation === 'transfer' ? 'Transfer Money' :
-               'Make a Deposit'}
-            </h3>
-            {successMessage && (
-              <div className="alert alert-success mb-4">
-                <div className="d-flex align-items-center">
-                  <CheckCircleFill className="me-2" />
-                  {successMessage}
-                </div>
-              </div>
-            )}
+          ) : (
             <form onSubmit={handleSubmit}>
-              {activeOperation === 'transfer' ? (
+              {activeOperation === 'transfer' && (
                 <div className="mb-3">
-                  <label className="form-label">To Account</label>
+                  <label className="form-label">Transfer To</label>
                   <select
                     className="form-select form-select-lg"
                     name="toAccount"
@@ -690,7 +698,7 @@ function Transactions() {
                     required
                     style={styles.input}
                   >
-                    <option value="">Select account</option>
+                    <option value="">Select Account</option>
                     {activeAccount === 'current' ? (
                       <option value="savings">Savings Account</option>
                     ) : (
@@ -698,7 +706,8 @@ function Transactions() {
                     )}
                   </select>
                 </div>
-              ) : activeOperation === 'pay' ? (
+              )}
+              {activeOperation === 'pay' && (
                 <>
                   <div className="mb-3">
                     <label className="form-label">Recipient Name</label>
@@ -730,7 +739,7 @@ function Transactions() {
                     />
                   </div>
                 </>
-              ) : null}
+              )}
               <div className="mb-3">
                 <label className="form-label">Amount</label>
                 <div className="input-group input-group-lg">
@@ -747,11 +756,6 @@ function Transactions() {
                     style={styles.input}
                   />
                 </div>
-                {activeOperation === 'deposit' && (
-                  <div className="form-text text-white-50 mt-2">
-                    Current balance: {formatAmount(accountBalances.current)}
-                  </div>
-                )}
               </div>
               <div className="mb-4">
                 <label className="form-label">Description</label>
@@ -761,8 +765,8 @@ function Transactions() {
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  required={activeOperation !== 'deposit'}
-                  placeholder={activeOperation === 'deposit' ? 'Optional description' : 'Enter description'}
+                  required
+                  placeholder="Enter description"
                   style={styles.input}
                 />
               </div>
@@ -771,12 +775,10 @@ function Transactions() {
                 className="btn btn-lg w-100"
                 style={{ ...styles.button, backgroundColor: '#00C4B4' }}
               >
-                {activeOperation === 'pay' ? 'Make Payment' : 
-                 activeOperation === 'transfer' ? 'Transfer Money' :
-                 'Make Deposit'}
+                {activeOperation === 'pay' ? 'Make Payment' : 'Transfer Money'}
               </button>
             </form>
-          </div>
+          )}
         </div>
       </div>
     );
