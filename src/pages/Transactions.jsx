@@ -243,7 +243,7 @@ function Transactions() {
                 </div>
                 <div style={styles.transactionAmount}>
                   <span className={transaction.type === 'credit' ? 'text-success' : 'text-danger'}>
-                    {transaction.type === 'credit' ? '+' : '-'}${Math.abs(transaction.amount).toFixed(2)}
+                    {transaction.type === 'credit' ? '+' : '-'}R{Math.abs(transaction.amount).toFixed(2)}
                   </span>
                 </div>
               </div>
