@@ -351,19 +351,22 @@ function Transactions() {
       return null;
     }
 
+    // Filter transactions for the active account
+    const filteredTransactions = transactions.filter(t => t.accountType === activeAccount);
+
     return (
       <div style={styles.transactionHistory}>
         <div style={styles.transactionHeader}>
           <h2>Transaction History</h2>
         </div>
         <div>
-          {transactions.length === 0 ? (
+          {filteredTransactions.length === 0 ? (
             <div className="text-center py-4">
               <p className="text-muted">No transactions found.</p>
             </div>
           ) : (
             <div>
-              {transactions.map((transaction, index) => (
+              {filteredTransactions.map((transaction, index) => (
                 <div
                   key={index}
                   style={{
@@ -418,6 +421,7 @@ function Transactions() {
                       setActiveAccount('current');
                       setActiveOperation(null);
                       setActiveView('operations-current');
+                      setShowTransactions(true);
                       fetchTransactions();
                     }}
                   >
@@ -438,6 +442,7 @@ function Transactions() {
                       setActiveAccount('savings');
                       setActiveOperation(null);
                       setActiveView('operations-savings');
+                      setShowTransactions(true);
                       fetchTransactions();
                     }}
                   >
