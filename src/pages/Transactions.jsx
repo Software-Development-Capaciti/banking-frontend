@@ -24,8 +24,8 @@ function Transactions() {
     recipientAccountNumber: ''
   });
   const [accountBalances, setAccountBalances] = useState({
-    current: 1000,
-    savings: 2000
+    current: 0,
+    savings: 0
   });
 
   const styles = {
@@ -100,6 +100,16 @@ function Transactions() {
   };
 
   useEffect(() => {
+    fetchAccountBalances();
+  }, []);
+
+  useEffect(() => {
+    if (transactions.length > 0) {
+      fetchAccountBalances();
+    }
+  }, [transactions]);
+
+  useEffect(() => {
     if (activeView === 'transactions') {
       fetchTransactions();
     }
@@ -123,33 +133,11 @@ function Transactions() {
     setSuccessMessage('');
   }, [activeOperation]);
 
-  useEffect(() => {
-    // Fetch initial balances
-    const fetchBalances = async () => {
-      try {
-        const response = await axios.get('http://localhost:8080/api/dashboard');
-        setAccountBalances({
-          current: response.data.currentBalance,
-          savings: response.data.savingsBalance
-        });
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      }
-    };
-    fetchBalances();
-  }, []);
-
   const fetchTransactions = async () => {
     try {
       let endpoint = activeAccount ? `/api/transactions/${activeAccount}` : '/api/transactions';
       const response = await axios.get(`http://localhost:8080${endpoint}`);
       setTransactions(response.data);
-      // Update balances after transaction
-      const dashResponse = await axios.get('http://localhost:8080/api/dashboard');
-      setAccountBalances({
-        current: dashResponse.data.currentBalance,
-        savings: dashResponse.data.savingsBalance
-      });
     } catch (error) {
       console.error('Error fetching transactions:', error);
       setTransactions([]);
@@ -158,7 +146,9 @@ function Transactions() {
 
   const fetchAccountBalances = async () => {
     try {
+      console.log('Fetching account balances...');
       const response = await axios.get('http://localhost:8080/api/dashboard');
+      console.log('Received balances:', response.data);
       setAccountBalances({
         current: response.data.currentBalance,
         savings: response.data.savingsBalance
@@ -222,12 +212,20 @@ function Transactions() {
         };
       }
 
+      console.log('Sending request:', { endpoint, payload });
       const response = await axios.post(`http://localhost:8080${endpoint}`, payload);
+      console.log('Received response:', response.data);
 
       if (response.data) {
+        // Refresh balances first
+        await fetchAccountBalances();
+        
+        // Get the updated balance
+        const newBalance = accountBalances.current;
+        
         // Show success message with amount
         const message = activeOperation === 'deposit' 
-          ? `Successfully deposited ${formatAmount(payload.amount)}. New balance: ${formatAmount(accountBalances.current + payload.amount)}`
+          ? `Successfully deposited ${formatAmount(payload.amount)}. New balance: ${formatAmount(newBalance)}`
           : `${activeOperation === 'pay' ? 'Payment' : 'Transfer'} successful!`;
         
         setSuccessMessage(message);
@@ -241,13 +239,10 @@ function Transactions() {
           recipientAccountNumber: ''
         });
 
-        // Refresh transactions and balances
-        await Promise.all([
-          fetchTransactions(),
-          fetchAccountBalances()
-        ]);
+        // Refresh transactions
+        await fetchTransactions();
 
-        // Clear success message after 5 seconds (increased from 3)
+        // Clear success message after 5 seconds
         setTimeout(() => {
           setSuccessMessage('');
         }, 5000);
