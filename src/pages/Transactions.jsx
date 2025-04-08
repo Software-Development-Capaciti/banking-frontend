@@ -23,6 +23,10 @@ function Transactions() {
     recipientName: '',
     recipientAccountNumber: ''
   });
+  const [accountBalances, setAccountBalances] = useState({
+    current: 25000,
+    savings: 50000
+  });
 
   const styles = {
     container: {
@@ -113,10 +117,32 @@ function Transactions() {
     setSuccessMessage('');
   }, [activeOperation]);
 
+  useEffect(() => {
+    // Fetch initial balances
+    const fetchBalances = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/dashboard');
+        setAccountBalances({
+          current: response.data.currentBalance,
+          savings: response.data.savingsBalance
+        });
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      }
+    };
+    fetchBalances();
+  }, []);
+
   const fetchTransactions = async () => {
     try {
       const response = await axios.get(`http://localhost:8080/api/transactions/${activeAccount}`);
       setTransactions(response.data);
+      // Update balances after transaction
+      const dashResponse = await axios.get('http://localhost:8080/api/dashboard');
+      setAccountBalances({
+        current: dashResponse.data.currentBalance,
+        savings: dashResponse.data.savingsBalance
+      });
     } catch (error) {
       console.error('Error fetching transactions:', error);
       setTransactions([]);
@@ -213,52 +239,52 @@ function Transactions() {
   };
 
   const renderTransactionHistory = () => {
-    if (!transactions.length) {
-      return (
-        <div className="card" style={styles.transactionCard}>
-          <div className="card-body text-center py-5">
-            <h5 className="text-white mb-0">No transactions found</h5>
-          </div>
-        </div>
-      );
-    }
-
     return (
-      <div className="card" style={styles.transactionCard}>
-        <div className="card-header" style={{ backgroundColor: '#1A2526', borderBottom: '1px solid #3A4B4C' }}>
-          <h5 className="mb-0 text-white">Transaction History</h5>
+      <div className="mt-4">
+        <div className="d-flex align-items-center mb-3">
+          <ClockHistory size={24} className="me-2 text-white" />
+          <h4 className="mb-0 text-white">Transaction History</h4>
         </div>
-        <div className="card-body p-0">
-          {transactions.map((transaction, index) => (
-            <div
-              key={transaction.id || index}
-              style={{
-                ...styles.transactionItem,
-                ...(hoveredTransaction === index ? styles.transactionItemHover : {}),
-                borderBottom: index < transactions.length - 1 ? '1px solid #3A4B4C' : 'none'
-              }}
-              onMouseEnter={() => setHoveredTransaction(index)}
-              onMouseLeave={() => setHoveredTransaction(null)}
-            >
-              <div className="d-flex justify-content-between align-items-center text-white">
-                <div>
-                  <h6 className="mb-1">{transaction.description}</h6>
-                  <small className="text-muted">
-                    {new Date(transaction.date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </small>
-                </div>
-                <div style={styles.transactionAmount}>
-                  <span className={transaction.type === 'credit' ? 'text-success' : 'text-danger'}>
-                    {transaction.type === 'credit' ? '+' : '-'}R{Math.abs(transaction.amount).toFixed(2)}
-                  </span>
-                </div>
+        <div className="card" style={styles.transactionCard}>
+          <div className="card-body p-0">
+            {transactions.length === 0 ? (
+              <div className="text-center text-muted p-4">
+                No transactions to display
               </div>
-            </div>
-          ))}
+            ) : (
+              <div className="list-group list-group-flush">
+                {transactions.map((transaction, index) => (
+                  <div
+                    key={index}
+                    className="list-group-item"
+                    style={{
+                      ...styles.transactionItem,
+                      ...(hoveredTransaction === index ? styles.transactionItemHover : {})
+                    }}
+                    onMouseEnter={() => setHoveredTransaction(index)}
+                    onMouseLeave={() => setHoveredTransaction(null)}
+                  >
+                    <div className="d-flex justify-content-between align-items-start">
+                      <div>
+                        <h6 className="mb-1 text-white">
+                          {transaction.description}
+                        </h6>
+                        <small className="text-muted">
+                          {formatDate(transaction.date)}
+                        </small>
+                      </div>
+                      <div
+                        className={`text-${transaction.type === 'credit' ? 'success' : 'danger'}`}
+                        style={styles.transactionAmount}
+                      >
+                        {transaction.type === 'credit' ? '+' : '-'}{formatAmount(transaction.amount)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -285,7 +311,7 @@ function Transactions() {
           <div className="card-body d-flex flex-column align-items-center justify-content-center text-center text-white">
             <WalletFill size={48} className="text-#00C4B4 mb-3" />
             <h3 className="card-title mb-3">Current Account</h3>
-            <h4 className="text-#00C4B4 mb-3">{formatAmount(25000)}</h4>
+            <h4 className="text-#00C4B4 mb-3">{formatAmount(accountBalances.current)}</h4>
             <p className="card-text text-muted">Your everyday spending account</p>
           </div>
         </div>
@@ -309,7 +335,7 @@ function Transactions() {
           <div className="card-body d-flex flex-column align-items-center justify-content-center text-center text-white">
             <Wallet2 size={48} className="text-#00C4B4 mb-3" />
             <h3 className="card-title mb-3">Savings Account</h3>
-            <h4 className="text-#00C4B4 mb-3">{formatAmount(50000)}</h4>
+            <h4 className="text-#00C4B4 mb-3">{formatAmount(accountBalances.savings)}</h4>
             <p className="card-text text-muted">Your long-term savings account</p>
           </div>
         </div>
@@ -322,7 +348,7 @@ function Transactions() {
     const accountColor = isCurrentAccount ? 'primary' : 'success';
     const accountIcon = isCurrentAccount ? <WalletFill size={24} /> : <Wallet2 size={24} />;
     const accountName = isCurrentAccount ? 'Current Account' : 'Savings Account';
-    const balance = isCurrentAccount ? 25000 : 50000;
+    const balance = isCurrentAccount ? accountBalances.current : accountBalances.savings;
 
     return (
       <div style={styles.container}>
@@ -414,7 +440,7 @@ function Transactions() {
     const accountColor = isCurrentAccount ? 'primary' : 'success';
     const accountIcon = isCurrentAccount ? <WalletFill size={24} /> : <Wallet2 size={24} />;
     const accountName = isCurrentAccount ? 'Current Account' : 'Savings Account';
-    const balance = isCurrentAccount ? 25000 : 50000;
+    const balance = isCurrentAccount ? accountBalances.current : accountBalances.savings;
 
     return (
       <div style={styles.formContainer}>
@@ -550,7 +576,16 @@ function Transactions() {
   return (
     <div style={styles.container}>
       {activeView === 'accounts' && renderAccountsView()}
-      {activeView.includes('operations') && renderOperationsView()}
+      {activeView.includes('operations') && (
+        <div className="row">
+          <div className="col-12 col-lg-6 mb-4">
+            {renderOperationsView()}
+          </div>
+          <div className="col-12 col-lg-6">
+            {renderTransactionHistory()}
+          </div>
+        </div>
+      )}
       {activeView === 'transactions' && renderTransactionsView()}
     </div>
   );
