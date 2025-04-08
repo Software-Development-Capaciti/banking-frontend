@@ -147,45 +147,19 @@ function Transactions() {
     console.log('Form data:', formData);
     console.log('Active operation:', activeOperation);
     console.log('Active account:', activeAccount);
-
-    // Validate recipient account number for payments
-    if (activeOperation === 'pay' && formData.recipientAccountNumber) {
-      if (formData.recipientAccountNumber === '1234567890' || formData.recipientAccountNumber === '9876543210') {
-        // Internal transfer detected, switch to transfer mode
-        const toAccount = formData.recipientAccountNumber === '1234567890' ? 'current' : 'savings';
-        setFormData(prev => ({ ...prev, toAccount }));
-        setActiveOperation('transfer');
-      }
-    }
     
     let payload;
     try {
-      if (activeOperation === 'transfer') {
-        // For transfers, get the recipient account number based on the selected account
-        const recipientAccountNumber = formData.toAccount === 'current' ? '1234567890' : '9876543210';
-        payload = {
-          amount: parseFloat(formData.amount),
-          description: formData.description || `Transfer to ${formData.toAccount} account`,
-          type: 'transfer',
-          accountType: activeAccount,
-          date: new Date().toISOString().split('T')[0],
-          recipientName: `${formData.toAccount.charAt(0).toUpperCase() + formData.toAccount.slice(1)} Account`,
-          recipientAccountNumber: recipientAccountNumber,
-          toAccount: formData.toAccount
-        };
-      } else {
-        // For payments
-        payload = {
-          amount: parseFloat(formData.amount),
-          description: formData.description,
-          type: 'debit',
-          accountType: activeAccount,
-          date: new Date().toISOString().split('T')[0],
-          recipientName: formData.recipientName,
-          recipientAccountNumber: formData.recipientAccountNumber,
-          toAccount: null
-        };
-      }
+      payload = {
+        amount: parseFloat(formData.amount),
+        description: formData.description,
+        type: activeOperation === 'pay' ? 'debit' : 'transfer',
+        accountType: activeAccount,
+        date: new Date().toISOString().split('T')[0],
+        recipientName: formData.recipientName,
+        recipientAccountNumber: formData.recipientAccountNumber,
+        toAccount: activeOperation === 'transfer' ? formData.toAccount : null
+      };
 
       const endpoint = activeOperation === 'pay' ? '/api/transactions/pay' : '/api/transactions/transfer';
       const response = await axios.post(`http://localhost:8080${endpoint}`, payload);
