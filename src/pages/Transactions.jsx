@@ -419,70 +419,113 @@ function Transactions() {
 
   const renderAccountsView = () => {
     return (
-      <div>
-        <div className="row g-4 mb-4">
+      <div className="container">
+        <div className="row">
           <div className="col-12">
-            <div className="card h-100" 
-              style={{
-                ...styles.accountCard,
-                ...(hoveredCard === 'deposit' ? styles.accountCardHover : {})
-              }}
-              onMouseEnter={() => setHoveredCard('deposit')}
-              onMouseLeave={() => setHoveredCard(null)}
-              onClick={() => {
-                setActiveOperation('deposit');
-                setActiveAccount('current');
-                setActiveView('current-operations');
-              }}
-            >
-              <div className="card-body d-flex flex-column align-items-center justify-content-center text-center text-white">
-                <CashStack size={48} className="text-#00C4B4 mb-3" />
-                <h3 className="card-title mb-3">Deposit Money</h3>
-                <p className="card-text text-muted">Add money to your current account</p>
+            <div style={{ marginBottom: '2rem' }}>
+              <h2 style={{ color: '#fff', marginBottom: '1rem' }}>Account Overview</h2>
+              <div className="row">
+                <div className="col-md-6 mb-4">
+                  <div style={styles.accountCard}>
+                    <h3 style={{ color: '#fff', marginBottom: '1rem' }}>Current Account</h3>
+                    <p style={{ color: '#aaa', marginBottom: '0.5rem' }}>**** 7890</p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#aaa' }}>Available Balance</span>
+                      <span style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                        {formatAmount(accountBalances.current)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-6 mb-4">
+                  <div style={styles.accountCard}>
+                    <h3 style={{ color: '#fff', marginBottom: '1rem' }}>Savings Account</h3>
+                    <p style={{ color: '#aaa', marginBottom: '0.5rem' }}>**** 3210</p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#aaa' }}>Available Balance</span>
+                      <span style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                        {formatAmount(accountBalances.savings)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="row g-4">
-          <div className="col-md-6">
-            <div className="card h-100" 
-              style={{
-                ...styles.accountCard,
-                ...(hoveredCard === 'current' ? styles.accountCardHover : {})
-              }}
-              onMouseEnter={() => setHoveredCard('current')}
-              onMouseLeave={() => setHoveredCard(null)}
-              onClick={() => {
-                setActiveAccount('current');
-                setActiveView('transactions');
-              }}
-            >
-              <div className="card-body d-flex flex-column align-items-center justify-content-center text-center text-white">
-                <WalletFill size={48} className="text-#00C4B4 mb-3" />
-                <h3 className="card-title mb-3">Current Account</h3>
-                <h4 className="text-#00C4B4 mb-3">{formatAmount(accountBalances.current)}</h4>
-                <p className="card-text text-muted">Your everyday spending account</p>
+
+        <div className="row">
+          <div className="col-12">
+            <h3 style={{ color: '#fff', marginBottom: '1rem' }}>Quick Actions</h3>
+            <div className="row">
+              <div className="col-md-4 mb-3">
+                <button
+                  className="btn w-100"
+                  style={{
+                    ...styles.accountCard,
+                    textAlign: 'left',
+                    border: 'none',
+                    height: '100%',
+                    minHeight: '120px'
+                  }}
+                  onClick={() => {
+                    setActiveAccount('current');
+                    setActiveOperation('deposit');
+                    setActiveView('operations-deposit');
+                  }}
+                >
+                  <CashStack size={24} color="#00C4B4" style={{ marginBottom: '0.5rem' }} />
+                  <h4 style={{ color: '#fff', marginBottom: '0.5rem' }}>Deposit</h4>
+                  <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: 0 }}>
+                    Add money to your account
+                  </p>
+                </button>
               </div>
-            </div>
-          </div>
-          <div className="col-md-6">
-            <div className="card h-100"
-              style={{
-                ...styles.accountCard,
-                ...(hoveredCard === 'savings' ? styles.accountCardHover : {})
-              }}
-              onMouseEnter={() => setHoveredCard('savings')}
-              onMouseLeave={() => setHoveredCard(null)}
-              onClick={() => {
-                setActiveAccount('savings');
-                setActiveView('transactions');
-              }}
-            >
-              <div className="card-body d-flex flex-column align-items-center justify-content-center text-center text-white">
-                <Wallet2 size={48} className="text-#00C4B4 mb-3" />
-                <h3 className="card-title mb-3">Savings Account</h3>
-                <h4 className="text-#00C4B4 mb-3">{formatAmount(accountBalances.savings)}</h4>
-                <p className="card-text text-muted">Your long-term savings account</p>
+              <div className="col-md-4 mb-3">
+                <button
+                  className="btn w-100"
+                  style={{
+                    ...styles.accountCard,
+                    textAlign: 'left',
+                    border: 'none',
+                    height: '100%',
+                    minHeight: '120px'
+                  }}
+                  onClick={() => {
+                    setActiveAccount('current');
+                    setActiveOperation('transfer');
+                    setActiveView('operations-transfer');
+                  }}
+                >
+                  <ArrowLeftRight size={24} color="#00C4B4" style={{ marginBottom: '0.5rem' }} />
+                  <h4 style={{ color: '#fff', marginBottom: '0.5rem' }}>Transfer</h4>
+                  <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: 0 }}>
+                    Move money between accounts
+                  </p>
+                </button>
+              </div>
+              <div className="col-md-4 mb-3">
+                <button
+                  className="btn w-100"
+                  style={{
+                    ...styles.accountCard,
+                    textAlign: 'left',
+                    border: 'none',
+                    height: '100%',
+                    minHeight: '120px'
+                  }}
+                  onClick={() => {
+                    setActiveAccount('current');
+                    setActiveOperation('pay');
+                    setActiveView('operations-pay');
+                  }}
+                >
+                  <WalletFill size={24} color="#00C4B4" style={{ marginBottom: '0.5rem' }} />
+                  <h4 style={{ color: '#fff', marginBottom: '0.5rem' }}>Pay</h4>
+                  <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: 0 }}>
+                    Send money to someone
+                  </p>
+                </button>
               </div>
             </div>
           </div>
