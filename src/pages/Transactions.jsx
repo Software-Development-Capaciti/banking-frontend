@@ -5,7 +5,7 @@ import axios from 'axios';
 axios.defaults.headers.common['Content-Type'] = 'application/json';
 axios.defaults.headers.common['Accept'] = 'application/json';
 axios.defaults.withCredentials = true;
-import { CashStack, ArrowLeftRight, WalletFill, Wallet2, ClockHistory, ArrowLeft, CheckCircleFill } from 'react-bootstrap-icons';
+import { CashStack, ArrowLeftRight, WalletFill, Wallet2, ClockHistory, ArrowLeft, CheckCircleFill, Trash } from 'react-bootstrap-icons';
 
 function Transactions() {
   const [transactions, setTransactions] = useState([]);
@@ -27,6 +27,7 @@ function Transactions() {
     current: 0,
     savings: 0
   });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const styles = {
     container: {
@@ -330,6 +331,21 @@ function Transactions() {
     });
   };
 
+  const handleDeleteTransaction = async (transactionId) => {
+    try {
+      setIsDeleting(true);
+      await axios.delete(`http://localhost:8080/api/transactions/${transactionId}`);
+      // Refresh transactions and account balances
+      fetchTransactions();
+      fetchAccountBalances();
+      console.log(`Transaction ${transactionId} deleted successfully`);
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const renderTransactionHistory = () => {
     if (!showTransactions) {
       return null;
@@ -363,11 +379,19 @@ function Transactions() {
                       <p className="mb-1 fw-bold">{transaction.description}</p>
                       <p className="text-muted small mb-0">{formatDate(transaction.date)}</p>
                     </div>
-                    <div style={styles.transactionAmount}>
-                      <p className={`mb-0 fw-bold ${transaction.type === 'credit' || transaction.type === 'deposit' ? 'text-success' : 'text-danger'}`}>
-                        {transaction.type === 'credit' || transaction.type === 'deposit' ? '+' : '-'}{formatAmount(transaction.amount)}
-                      </p>
-                      <p className="text-muted small mb-0">Balance: {formatAmount(transaction.balance)}</p>
+                    <div className="d-flex align-items-center">
+                      <div style={styles.transactionAmount} className="me-3">
+                        <p className={`mb-0 fw-bold ${transaction.type === 'credit' || transaction.type === 'deposit' ? 'text-success' : 'text-danger'}`}>
+                          {transaction.type === 'credit' || transaction.type === 'deposit' ? '+' : '-'}{formatAmount(transaction.amount)}
+                        </p>
+                      </div>
+                      <button 
+                        className="btn btn-sm btn-outline-danger" 
+                        onClick={() => handleDeleteTransaction(transaction.id)}
+                        disabled={isDeleting}
+                      >
+                        <Trash size={16} />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -642,7 +666,6 @@ function Transactions() {
                   <h4 className="text-white mb-2">{accountType} Account</h4>
                   <p className="text-muted mb-2">Account Number: {accountNumber}</p>
                   <h3 className="text-white mb-0">{formatAmount(accountBalance)}</h3>
-                  <small className="text-muted">Available Balance</small>
                 </div>
               </div>
               
