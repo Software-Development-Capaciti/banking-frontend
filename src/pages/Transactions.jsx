@@ -217,11 +217,14 @@ function Transactions() {
       console.log('Received response:', response.data);
 
       if (response.data) {
-        // Refresh balances first
-        await fetchAccountBalances();
+        // Get the new balance from the response
+        const newBalance = response.data.balance;
         
-        // Get the updated balance
-        const newBalance = accountBalances.current;
+        // Update the account balances
+        setAccountBalances(prev => ({
+          ...prev,
+          [activeAccount]: newBalance
+        }));
         
         // Show success message with amount
         const message = activeOperation === 'deposit' 
