@@ -26,6 +26,7 @@ function Sidebar() {
               <Link
                 to="/"
                 className="nav-link d-flex align-items-center text-white"
+                data-bs-dismiss="offcanvas"
                 style={{
                   background: location.pathname === '/' ? 'linear-gradient(135deg, #00C4B4 0%, #00A3B9 100%)' : 'transparent',
                   borderRadius: '10px',
@@ -40,6 +41,7 @@ function Sidebar() {
               <Link
                 to="/cards"
                 className="nav-link d-flex align-items-center text-white"
+                data-bs-dismiss="offcanvas"
                 style={{
                   background: location.pathname === '/cards' ? 'linear-gradient(135deg, #00C4B4 0%, #00A3B9 100%)' : 'transparent',
                   borderRadius: '10px',
@@ -54,6 +56,7 @@ function Sidebar() {
               <Link
                 to="/transactions"
                 className="nav-link d-flex align-items-center text-white"
+                data-bs-dismiss="offcanvas"
                 style={{
                   background: location.pathname === '/transactions' ? 'linear-gradient(135deg, #00C4B4 0%, #00A3B9 100%)' : 'transparent',
                   borderRadius: '10px',
@@ -68,6 +71,7 @@ function Sidebar() {
               <Link
                 to="/payments"
                 className="nav-link d-flex align-items-center text-white"
+                data-bs-dismiss="offcanvas"
                 style={{
                   background: location.pathname === '/payments' ? 'linear-gradient(135deg, #00C4B4 0%, #00A3B9 100%)' : 'transparent',
                   borderRadius: '10px',
@@ -82,6 +86,7 @@ function Sidebar() {
               <Link
                 to="/profile"
                 className="nav-link d-flex align-items-center text-white"
+                data-bs-dismiss="offcanvas"
                 style={{
                   background: location.pathname === '/profile' ? 'linear-gradient(135deg, #00C4B4 0%, #00A3B9 100%)' : 'transparent',
                   borderRadius: '10px',
@@ -109,7 +114,7 @@ function Sidebar() {
         </div>
       </div>
 
-      {/* Sidebar for Desktop */}
+      {/* Sidebar for Desktop - remains unchanged */}
       <div
         className="d-none d-md-block"
         style={{
@@ -118,14 +123,13 @@ function Sidebar() {
           backgroundColor: '#1A2526',
           borderRight: 'none',
           position: 'fixed',
-          top: '84px', // Already correctly positioned below the navbar
+          top: '84px',
           left: 0
         }}
       >
         <div
-          className="p-3 pt-4 pt-md-3 pt-lg-4" // Adjustment 1: Match dashboard's top padding
+          className="p-3 pt-4 pt-md-3 pt-lg-4"
           style={{
-            // Adjustment 2: Ensure the sidebar content doesn't overflow
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
