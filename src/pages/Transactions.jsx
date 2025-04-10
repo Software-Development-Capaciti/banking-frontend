@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import eventBus from '../utils/eventBus';
 
 // Configure axios
 axios.defaults.headers.common['Content-Type'] = 'application/json';
@@ -501,6 +502,9 @@ function Transactions() {
     try {
       fetchAccountBalances();
       fetchTransactions();
+      
+      // Emit transaction event to update bank statement
+      eventBus.emit('transaction:created', { transaction, timestamp: new Date().getTime() });
     } catch (error) {
       console.log('Could not refresh data from backend');
     }
