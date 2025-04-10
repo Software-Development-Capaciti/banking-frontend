@@ -201,11 +201,14 @@ function Payments() {
       const timestamp = new Date().getTime(); // Add cache-busting parameter
       const response = await axios.get(`http://localhost:8080/api/transactions?_=${timestamp}`);
       
-      // Transform data if needed
+      // Transform data if needed and ensure description field is present
       const transformedTransactions = response.data.map(transaction => ({
         ...transaction,
-        date: new Date(transaction.date)
+        date: new Date(transaction.date),
+        description: transaction.description || 'No description provided' // Ensure description is present
       }));
+      
+      console.log('Fetched transactions:', transformedTransactions); // Log for debugging
       
       setTransactions(transformedTransactions);
       
@@ -221,10 +224,11 @@ function Payments() {
       if (storedTransactions) {
         try {
           const parsedTransactions = JSON.parse(storedTransactions);
-          // Convert date strings back to Date objects
+          // Convert date strings back to Date objects and ensure description field
           const transformedTransactions = parsedTransactions.map(transaction => ({
             ...transaction,
-            date: new Date(transaction.date)
+            date: new Date(transaction.date),
+            description: transaction.description || 'No description provided' // Ensure description is present
           }));
           setTransactions(transformedTransactions);
         } catch (e) {
@@ -498,7 +502,9 @@ function Payments() {
                   {filteredTransactions.map((transaction) => (
                     <tr key={transaction.id} style={{ backgroundColor: 'transparent', borderColor: '#3A4B4C' }}>
                       <td>{formatDate(transaction.date)}</td>
-                      <td>{transaction.description}</td>
+                      <td style={{ fontWeight: '500', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {transaction.description || 'No description provided'}
+                      </td>
                       <td>
                         <span className="badge" style={{ backgroundColor: '#3A4B4C', color: 'white' }}>{transaction.type}</span>
                       </td>
