@@ -16,7 +16,7 @@ function Sidebar() {
       >
         <div className="offcanvas-header">
           <h5 className="offcanvas-title text-white" id="sidebarLabel">
-            BamBank
+            DevBank
           </h5>
           <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>

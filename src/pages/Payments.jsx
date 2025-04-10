@@ -604,9 +604,9 @@ function Payments() {
 
   return (
     <div className="container-fluid py-4">
-      <div className="row">
-        <div className="col-12">
-          <div className="card mb-4">
+      <div className="row justify-content-center">
+        <div className="col-12 d-flex justify-content-center">
+          <div className="card mb-4" style={{ maxWidth: '800px', width: '100%' }}>
             <div className="card-header d-flex justify-content-between align-items-center">
               <h5 className="mb-0">Account Selection</h5>
               <div className="d-flex">
@@ -621,24 +621,27 @@ function Payments() {
               </div>
             </div>
             <div className="card-body">
-              <div className="btn-group w-100">
+              <div className="d-flex flex-wrap justify-content-center">
                 <button 
-                  className={`btn ${activeAccount === 'all' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  className={`btn ${activeAccount === 'all' ? 'btn-primary' : 'btn-outline-primary'} m-1`}
                   onClick={() => setActiveAccount('all')}
+                  style={{ width: '140px' }}
                 >
                   All Accounts
                 </button>
                 <button 
-                  className={`btn ${activeAccount === 'current' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  className={`btn ${activeAccount === 'current' ? 'btn-primary' : 'btn-outline-primary'} m-1`}
                   onClick={() => setActiveAccount('current')}
+                  style={{ width: '140px' }}
                 >
-                  Current Account
+                  Current
                 </button>
                 <button 
-                  className={`btn ${activeAccount === 'savings' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  className={`btn ${activeAccount === 'savings' ? 'btn-primary' : 'btn-outline-primary'} m-1`}
                   onClick={() => setActiveAccount('savings')}
+                  style={{ width: '140px' }}
                 >
-                  Savings Account
+                  Savings
                 </button>
               </div>
             </div>
