@@ -1267,11 +1267,8 @@ function Transactions() {
       {activeView === 'accounts' && renderAccountsView()}
       {activeView.includes('operations') && (
         <div className="row">
-          <div className="col-12 col-lg-6 mb-4">
+          <div className="col-12">
             {renderOperationsView()}
-          </div>
-          <div className="col-12 col-lg-6">
-            {renderTransactionHistory()}
           </div>
         </div>
       )}
