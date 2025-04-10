@@ -394,226 +394,148 @@ function Payments() {
 
   // Render transaction history component
   const renderTransactionHistory = () => {
-    // Filter transactions for the active account
-    let filteredTransactions = transactions;
-    if (activeAccount !== 'all') {
-      filteredTransactions = transactions.filter(t => t.accountType === activeAccount);
-    }
-    
-    // Apply search and filters
-    filteredTransactions = filterTransactions(filteredTransactions);
-    
-    // Get unique categories for filter dropdown
-    const categories = [...new Set(transactions.map(t => t.category).filter(Boolean))];
+    const filteredTransactions = filterTransactions(transactions);
     
     return (
-      <div style={styles.container}>
-        <div style={styles.transactionHistory}>
-          <div style={styles.transactionHeader} className="d-flex justify-content-between align-items-center">
-            <h4 className="mb-0">Transaction History</h4>
-            <div>
-              <button 
-                className="btn btn-outline-primary me-2"
-                onClick={() => setShowFilters(!showFilters)}
-              >
-                <Filter size={16} className="me-1" />
-                {showFilters ? 'Hide Filters' : 'Show Filters'}
-              </button>
-              <button 
-                className="btn btn-outline-success"
-                onClick={exportTransactionsCSV}
-              >
-                <Download size={16} className="me-1" />
-                Export CSV
-              </button>
-            </div>
+      <div className="card" style={{ backgroundColor: '#2A3B3C', borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', border: 'none', maxWidth: '800px', width: '100%' }}>
+        <div className="card-header d-flex justify-content-between align-items-center" style={{ backgroundColor: '#00C4B4', color: 'white', borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}>
+          <h5 className="mb-0">Transaction History</h5>
+          <div className="d-flex">
+            <button 
+              className="btn btn-sm me-2" 
+              onClick={() => setShowFilters(!showFilters)}
+              style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white', border: 'none' }}
+            >
+              <Filter className="me-1" /> Filters
+            </button>
+            <button 
+              className="btn btn-sm" 
+              onClick={exportTransactionsCSV}
+              style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white', border: 'none' }}
+            >
+              <Download className="me-1" /> Export CSV
+            </button>
           </div>
-          
-          {successMessage && (
-            <div style={styles.alertSuccess}>
-              <div>
-                <CheckCircleFill size={16} className="me-2" />
-                {successMessage}
-              </div>
-              <button 
-                className="btn btn-sm" 
-                onClick={() => setSuccessMessage('')}
-                style={{ background: 'none', border: 'none' }}
-              >
-                <XCircle size={16} />
-              </button>
-            </div>
-          )}
-          
-          {errorMessage && (
-            <div style={styles.alertError}>
-              <div>
-                <XCircle size={16} className="me-2" />
-                {errorMessage}
-              </div>
-              <button 
-                className="btn btn-sm" 
-                onClick={() => setErrorMessage('')}
-                style={{ background: 'none', border: 'none' }}
-              >
-                <XCircle size={16} />
-              </button>
-            </div>
-          )}
-          
-          <div style={styles.searchBar}>
-            <Search size={16} className="me-2 text-muted" />
-            <input
-              id="searchInput"
-              type="text"
-              className="form-control border-0 bg-transparent"
-              placeholder="Search transactions..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-            />
-          </div>
-          
-          {showFilters && (
-            <div style={styles.filterContainer}>
-              <div className="row">
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">Category</label>
-                  <select
-                    id="categoryFilter"
-                    className="form-select"
-                    value={filterCategory}
-                    onChange={handleCategoryFilterChange}
-                  >
-                    <option value="">All Categories</option>
-                    {categories.map((category, index) => (
-                      <option key={index} value={category}>{category}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">From Date</label>
+        </div>
+        
+        {showFilters && (
+          <div className="card-body border-bottom" style={{ backgroundColor: '#1A2526' }}>
+            <div className="row g-3">
+              <div className="col-md-4">
+                <div className="input-group">
+                  <span className="input-group-text" style={{ backgroundColor: '#3A4B4C', border: '1px solid #3A4B4C', color: 'white' }}>
+                    <Search />
+                  </span>
                   <input
-                    id="startDate"
-                    type="date"
-                    className="form-control"
-                    name="startDate"
-                    value={filterDateRange.startDate}
-                    onChange={handleDateFilterChange}
-                  />
-                </div>
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">To Date</label>
-                  <input
-                    id="endDate"
-                    type="date"
-                    className="form-control"
-                    name="endDate"
-                    value={filterDateRange.endDate}
-                    onChange={handleDateFilterChange}
+                    type="text"
+                    className="form-control border-0 bg-transparent"
+                    placeholder="Search transactions..."
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    style={{ backgroundColor: '#3A4B4C', color: 'white', border: '1px solid #3A4B4C' }}
                   />
                 </div>
               </div>
-              <div className="d-flex justify-content-end">
-                <button 
-                  className="btn btn-outline-secondary"
-                  onClick={clearFilters}
+              <div className="col-md-3">
+                <select
+                  className="form-select"
+                  value={filterCategory}
+                  onChange={handleCategoryFilterChange}
+                  style={{ backgroundColor: '#3A4B4C', color: 'white', border: '1px solid #3A4B4C' }}
                 >
-                  Clear Filters
+                  <option value="">All Categories</option>
+                  <option value="deposit">Deposits</option>
+                  <option value="withdrawal">Withdrawals</option>
+                  <option value="transfer">Transfers</option>
+                  <option value="payment">Payments</option>
+                </select>
+              </div>
+              <div className="col-md-4">
+                <div className="input-group">
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={filterDateRange.startDate}
+                    onChange={(e) => handleDateFilterChange({ ...e, target: { ...e.target, name: 'startDate' } })}
+                    style={{ backgroundColor: '#3A4B4C', color: 'white', border: '1px solid #3A4B4C' }}
+                  />
+                  <span className="input-group-text" style={{ backgroundColor: '#3A4B4C', border: '1px solid #3A4B4C', color: 'white' }}>to</span>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={filterDateRange.endDate}
+                    onChange={(e) => handleDateFilterChange({ ...e, target: { ...e.target, name: 'endDate' } })}
+                    style={{ backgroundColor: '#3A4B4C', color: 'white', border: '1px solid #3A4B4C' }}
+                  />
+                </div>
+              </div>
+              <div className="col-md-1">
+                <button
+                  className="btn btn-sm w-100"
+                  onClick={clearFilters}
+                  style={{ backgroundColor: '#00C4B4', color: 'white', border: 'none' }}
+                >
+                  Clear
                 </button>
               </div>
             </div>
-          )}
-          
-          <div className="mt-4">
-            {isLoading ? (
-              <div className="text-center py-5">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
-                <p className="mt-2">Loading transactions...</p>
-              </div>
-            ) : filteredTransactions.length === 0 ? (
-              <div className="text-center py-5">
-                <p className="mb-0">No transactions found.</p>
-                {(searchTerm || filterCategory || filterDateRange.startDate || filterDateRange.endDate) && (
-                  <button 
-                    className="btn btn-link"
-                    onClick={clearFilters}
-                  >
-                    Clear filters
-                  </button>
-                )}
-              </div>
-            ) : (
-              filteredTransactions.map((transaction, index) => (
-                <div 
-                  key={transaction.id || index}
-                  style={{
-                    ...styles.transactionItem,
-                    ...(hoveredTransaction === index ? styles.transactionItemHover : {}),
-                    borderLeftColor: transaction.type === 'credit' || transaction.type === 'deposit' ? '#28a745' : '#dc3545'
-                  }}
-                  onMouseEnter={() => setHoveredTransaction(index)}
-                  onMouseLeave={() => setHoveredTransaction(null)}
-                >
-                  <div className="d-flex justify-content-between align-items-start">
-                    <div>
-                      <p className="mb-1 fw-bold">{transaction.description}</p>
-                      <p className="text-muted small mb-0">{formatDate(transaction.date)}</p>
-                      {transaction.accountType && (
-                        <span className="badge bg-secondary me-1">{transaction.accountType}</span>
-                      )}
-                      {transaction.category && (
-                        <span 
-                          className="badge" 
-                          style={{
-                            backgroundColor: categoryColors[transaction.category] || categoryColors['Other'],
-                            color: 'white'
-                          }}
-                        >
-                          {transaction.category}
-                        </span>
-                      )}
-                    </div>
-                    <div className="d-flex align-items-center">
-                      <div style={styles.transactionAmount} className="me-3">
-                        <p className={`mb-0 fw-bold ${transaction.type === 'credit' || transaction.type === 'deposit' ? 'text-success' : 'text-danger'}`}>
-                          {transaction.type === 'credit' || transaction.type === 'deposit' ? '+' : '-'}{formatAmount(transaction.amount)}
-                        </p>
-                        {transaction.balance && (
-                          <p className="text-muted small mb-0">Balance: {formatAmount(transaction.balance)}</p>
-                        )}
-                      </div>
-                      <button 
-                        className="btn btn-sm btn-outline-danger" 
-                        onClick={() => handleDeleteTransaction(transaction.id)}
-                        disabled={isDeleting}
-                      >
-                        <Trash size={16} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
           </div>
+        )}
+        
+        <div className="card-body" style={{ color: 'white' }}>
+          {filteredTransactions.length > 0 ? (
+            <div className="table-responsive">
+              <table className="table table-hover" style={{ color: 'white' }}>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Account</th>
+                    <th className="text-end">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTransactions.map((transaction) => (
+                    <tr key={transaction.id} style={{ backgroundColor: 'transparent', borderColor: '#3A4B4C' }}>
+                      <td>{formatDate(transaction.date)}</td>
+                      <td>{transaction.description}</td>
+                      <td>
+                        <span className="badge" style={{ backgroundColor: '#3A4B4C', color: 'white' }}>{transaction.type}</span>
+                      </td>
+                      <td>
+                        <span className="badge" style={{ backgroundColor: '#3A4B4C', color: 'white' }}>{transaction.accountType}</span>
+                      </td>
+                      <td className="text-end" style={{ color: transaction.amount < 0 ? '#FF5C5C' : '#00C4B4', fontWeight: 'bold' }}>
+                        {formatAmount(transaction.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-5" style={{ color: '#A0AEC0' }}>
+              <p className="mb-0">No transactions found.</p>
+            </div>
+          )}
         </div>
       </div>
     );
   };
 
   return (
-    <div className="container-fluid py-4">
+    <div className="container-fluid py-4" style={{ backgroundColor: '#1A2526', minHeight: '100vh' }}>
       <div className="row justify-content-center">
         <div className="col-12 d-flex justify-content-center">
-          <div className="card mb-4" style={{ maxWidth: '800px', width: '100%' }}>
-            <div className="card-header d-flex justify-content-between align-items-center">
+          <div className="card mb-4" style={{ maxWidth: '800px', width: '100%', backgroundColor: '#2A3B3C', borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', border: 'none' }}>
+            <div className="card-header d-flex justify-content-between align-items-center" style={{ backgroundColor: '#00C4B4', color: 'white', borderTopLeftRadius: '15px', borderTopRightRadius: '15px' }}>
               <h5 className="mb-0">Account Selection</h5>
               <div className="d-flex">
                 {activeAccount !== 'all' && (
                   <div className="me-3 d-flex align-items-center">
                     <span className="fw-bold me-2">Balance:</span>
-                    <span className="badge bg-success fs-6">
+                    <span className="badge bg-dark fs-6">
                       {formatAmount(activeAccount === 'current' ? accountBalances.current : accountBalances.savings)}
                     </span>
                   </div>
@@ -623,23 +545,23 @@ function Payments() {
             <div className="card-body">
               <div className="d-flex flex-wrap justify-content-center">
                 <button 
-                  className={`btn ${activeAccount === 'all' ? 'btn-primary' : 'btn-outline-primary'} m-1`}
+                  className={`btn ${activeAccount === 'all' ? 'btn-info' : 'btn-outline-info'} m-1`}
                   onClick={() => setActiveAccount('all')}
-                  style={{ width: '140px' }}
+                  style={{ width: '140px', backgroundColor: activeAccount === 'all' ? '#00C4B4' : 'transparent', borderColor: '#00C4B4', color: activeAccount === 'all' ? 'white' : '#00C4B4' }}
                 >
                   All Accounts
                 </button>
                 <button 
-                  className={`btn ${activeAccount === 'current' ? 'btn-primary' : 'btn-outline-primary'} m-1`}
+                  className={`btn ${activeAccount === 'current' ? 'btn-info' : 'btn-outline-info'} m-1`}
                   onClick={() => setActiveAccount('current')}
-                  style={{ width: '140px' }}
+                  style={{ width: '140px', backgroundColor: activeAccount === 'current' ? '#00C4B4' : 'transparent', borderColor: '#00C4B4', color: activeAccount === 'current' ? 'white' : '#00C4B4' }}
                 >
                   Current
                 </button>
                 <button 
-                  className={`btn ${activeAccount === 'savings' ? 'btn-primary' : 'btn-outline-primary'} m-1`}
+                  className={`btn ${activeAccount === 'savings' ? 'btn-info' : 'btn-outline-info'} m-1`}
                   onClick={() => setActiveAccount('savings')}
-                  style={{ width: '140px' }}
+                  style={{ width: '140px', backgroundColor: activeAccount === 'savings' ? '#00C4B4' : 'transparent', borderColor: '#00C4B4', color: activeAccount === 'savings' ? 'white' : '#00C4B4' }}
                 >
                   Savings
                 </button>
@@ -648,7 +570,7 @@ function Payments() {
           </div>
         </div>
         
-        <div className="col-12">
+        <div className="col-12 d-flex justify-content-center">
           {renderTransactionHistory()}
         </div>
       </div>
