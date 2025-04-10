@@ -1,34 +1,52 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
-  CashStack, 
   ArrowLeftRight, 
   ArrowUp, 
   ArrowDown, 
   Calendar3, 
   Search, 
   SortDown, 
-  Download, 
-  Printer
+  Download,
+  Trash,
+  CheckCircleFill,
+  Filter,
+  XCircle
 } from 'react-bootstrap-icons';
 
-function BankStatement() {
-  const [transactions, setTransactions] = useState([]);
-  const [filteredTransactions, setFilteredTransactions] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [dateRange, setDateRange] = useState({
-    startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0]
-  });
-  const [activeAccount, setActiveAccount] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState({
-    key: 'date',
-    direction: 'desc'
-  });
-  const [currentBalance, setCurrentBalance] = useState(0);
-  const [showFilters, setShowFilters] = useState(false);
+// Configure axios
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+axios.defaults.headers.common['Accept'] = 'application/json';
+axios.defaults.withCredentials = true;
 
+// Local storage keys
+const STORAGE_KEYS = {
+  TRANSACTIONS: 'banking_transactions',
+  ACCOUNT_BALANCES: 'banking_account_balances'
+};
+
+function Payments() {
+  const [activeAccount, setActiveAccount] = useState('all');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [transactions, setTransactions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hoveredTransaction, setHoveredTransaction] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterDateRange, setFilterDateRange] = useState({
+    startDate: '',
+    endDate: ''
+  });
+  const [showFilters, setShowFilters] = useState(false);
+  const [accountBalances, setAccountBalances] = useState({
+    current: 0,
+    savings: 0
+  });
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // Styles for transaction history
   const styles = {
     container: {
       backgroundColor: '#f8f9fa',
@@ -38,245 +56,281 @@ function BankStatement() {
       margin: '1rem auto',
       maxWidth: '1200px'
     },
-    header: {
+    transactionHistory: {
       backgroundColor: '#ffffff',
-      borderRadius: '8px',
+      borderRadius: '15px',
       padding: '1.5rem',
-      marginBottom: '1.5rem',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+      boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
     },
-    statement: {
-      backgroundColor: '#ffffff',
-      borderRadius: '8px',
-      padding: '1rem',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+    transactionHeader: {
+      marginBottom: '1.5rem'
     },
-    row: {
-      borderBottom: '1px solid #eaedf0',
-      padding: '1rem 0.5rem',
-      transition: 'background-color 0.2s'
-    },
-    rowHover: {
-      backgroundColor: '#f8fafb'
-    },
-    credit: {
-      color: '#2ecc71',
-      fontWeight: '500'
-    },
-    debit: {
-      color: '#e74c3c',
-      fontWeight: '500'
-    },
-    headerButton: {
-      padding: '0.5rem 1rem',
-      borderRadius: '6px',
-      border: '1px solid #dee2e6',
-      backgroundColor: '#ffffff',
-      fontSize: '0.9rem',
-      cursor: 'pointer',
-      transition: 'all 0.2s'
-    },
-    headerButtonHover: {
-      backgroundColor: '#f8f9fa',
-      borderColor: '#c6cad0'
-    },
-    balanceCard: {
-      backgroundColor: '#325db0',
-      color: 'white',
-      borderRadius: '8px',
-      padding: '1.25rem',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-    },
-    filters: {
-      backgroundColor: '#f8f9fa',
-      padding: '1rem',
-      borderRadius: '8px',
-      marginBottom: '1rem'
-    },
-    input: {
-      borderRadius: '6px',
-      border: '1px solid #dee2e6',
-      padding: '0.5rem',
-      width: '100%'
-    },
-    actionButton: {
-      padding: '0.5rem 1rem',
-      borderRadius: '6px',
-      backgroundColor: '#325db0',
-      color: 'white',
-      border: 'none',
-      cursor: 'pointer',
-      transition: 'background-color 0.2s'
-    },
-    actionButtonHover: {
-      backgroundColor: '#254a8f'
-    },
-    transactionIcon: {
-      width: '36px',
-      height: '36px',
-      borderRadius: '50%',
+    searchBar: {
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: '0.75rem'
+      backgroundColor: '#f8f9fa',
+      borderRadius: '8px',
+      padding: '0.5rem 1rem',
+      marginTop: '1rem'
     },
-    paginationButton: {
-      padding: '0.5rem 0.75rem',
-      margin: '0 0.25rem',
-      borderRadius: '6px',
-      border: '1px solid #dee2e6',
-      backgroundColor: '#ffffff',
-      cursor: 'pointer'
+    filterContainer: {
+      backgroundColor: '#f8f9fa',
+      borderRadius: '8px',
+      padding: '1rem',
+      marginTop: '1rem'
     },
-    paginationActive: {
-      backgroundColor: '#325db0',
-      color: 'white',
-      borderColor: '#325db0'
+    transactionItem: {
+      transition: 'background-color 0.2s',
+      padding: '1rem',
+      borderLeft: '4px solid transparent',
+      marginBottom: '0.5rem',
+      borderRadius: '0 8px 8px 0',
+      backgroundColor: '#f8f9fa'
+    },
+    transactionItemHover: {
+      backgroundColor: '#e9ecef'
+    },
+    transactionAmount: {
+      textAlign: 'right',
+      minWidth: '100px'
+    },
+    categoryBadge: {
+      display: 'inline-block',
+      padding: '2px 8px',
+      borderRadius: '12px',
+      fontSize: '0.75rem',
+      marginTop: '5px'
+    },
+    alertSuccess: {
+      backgroundColor: '#d4edda',
+      color: '#155724',
+      padding: '0.75rem 1.25rem',
+      marginBottom: '1rem',
+      borderRadius: '0.25rem',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
+    },
+    alertError: {
+      backgroundColor: '#f8d7da',
+      color: '#721c24',
+      padding: '0.75rem 1.25rem',
+      marginBottom: '1rem',
+      borderRadius: '0.25rem',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
     }
   };
 
+  // Category colors for transaction types
+  const categoryColors = {
+    'Food & Dining': '#FF9800',
+    'Transportation': '#2196F3',
+    'Bills & Utilities': '#F44336',
+    'Income': '#4CAF50',
+    'Transfer': '#9C27B0',
+    'Payment': '#E91E63',
+    'Other': '#607D8B'
+  };
+
+  // Listen for transaction updates
   useEffect(() => {
-    fetchAllTransactions();
+    // Set up polling to check for new transactions more frequently (every 3 seconds)
+    const intervalId = setInterval(() => {
+      setRefreshTrigger(prev => prev + 1);
+    }, 3000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);
 
+  // Fetch transactions and account balances when component mounts or refreshTrigger changes
   useEffect(() => {
-    applyFilters();
-  }, [transactions, dateRange, activeAccount, searchTerm, sortConfig]);
+    fetchTransactions();
+    fetchAccountBalances();
+  }, [refreshTrigger, activeAccount]);
 
-  const fetchAllTransactions = async () => {
-    setIsLoading(true);
+  // Auto-dismiss success and error messages after 5 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => {
+        setErrorMessage('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
+
+  // Fetch account balances
+  const fetchAccountBalances = async () => {
     try {
-      const currentResponse = await axios.get('http://localhost:8080/api/transactions/current');
-      const savingsResponse = await axios.get('http://localhost:8080/api/transactions/savings');
-      const paymentsResponse = await axios.get('http://localhost:8080/api/payments');
+      const timestamp = new Date().getTime(); // Add cache-busting parameter
+      const response = await axios.get(`http://localhost:8080/api/accounts/balances?_=${timestamp}`);
+      setAccountBalances(response.data);
       
-      const currentTransactions = currentResponse.data.map(tx => ({
-        ...tx,
-        accountType: 'Current Account',
-        accountNumber: '1234567890'
-      }));
-      
-      const savingsTransactions = savingsResponse.data.map(tx => ({
-        ...tx,
-        accountType: 'Savings Account',
-        accountNumber: '0987654321'
-      }));
-      
-      // Transform payments into transaction format
-      const paymentTransactions = paymentsResponse.data.map(payment => ({
-        id: `payment-${payment.id || Math.random().toString(36).substr(2, 9)}`,
-        date: payment.date,
-        description: payment.description || `Payment to ${payment.user}`,
-        amount: payment.amount,
-        type: 'debit', // Assume payments are debits
-        accountType: payment.accountType || 'Current Account',
-        accountNumber: '1234567890',
-        category: 'Payment',
-        user: payment.user
-      }));
-      
-      // Combine all transactions
-      const allTransactions = [
-        ...currentTransactions,
-        ...savingsTransactions,
-        ...paymentTransactions
-      ];
-      
-      setTransactions(allTransactions);
-      
-      // Calculate current balance from transactions
-      const balance = allTransactions.reduce((acc, tx) => {
-        if (tx.type === 'credit') {
-          return acc + parseFloat(tx.amount);
-        } else {
-          return acc - parseFloat(tx.amount);
-        }
-      }, 25000); // Starting with a base balance of 25000
-      
-      setCurrentBalance(balance);
-      setIsLoading(false);
+      // Store in localStorage as fallback
+      localStorage.setItem(STORAGE_KEYS.ACCOUNT_BALANCES, JSON.stringify(response.data));
     } catch (error) {
-      console.error('Error fetching transaction data:', error);
-      setIsLoading(false);
-    }
-  };
-
-  const applyFilters = () => {
-    let filtered = [...transactions];
-    
-    // Filter by date range
-    filtered = filtered.filter(tx => {
-      const txDate = new Date(tx.date);
-      const startDate = new Date(dateRange.startDate);
-      const endDate = new Date(dateRange.endDate);
-      endDate.setHours(23, 59, 59); // Include the entire end day
-      
-      return txDate >= startDate && txDate <= endDate;
-    });
-    
-    // Filter by account
-    if (activeAccount !== 'all') {
-      filtered = filtered.filter(tx => 
-        tx.accountType.toLowerCase().includes(activeAccount.toLowerCase())
-      );
-    }
-    
-    // Filter by search term
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(tx => 
-        tx.description?.toLowerCase().includes(term) ||
-        tx.category?.toLowerCase().includes(term) ||
-        tx.recipientName?.toLowerCase().includes(term) ||
-        tx.recipientAccountNumber?.includes(term) ||
-        tx.user?.toLowerCase().includes(term)
-      );
-    }
-    
-    // Apply sorting
-    filtered.sort((a, b) => {
-      if (sortConfig.key === 'date') {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        
-        if (sortConfig.direction === 'asc') {
-          return dateA - dateB;
-        } else {
-          return dateB - dateA;
-        }
-      } else if (sortConfig.key === 'amount') {
-        const amountA = parseFloat(a.amount);
-        const amountB = parseFloat(b.amount);
-        
-        if (sortConfig.direction === 'asc') {
-          return amountA - amountB;
-        } else {
-          return amountB - amountA;
-        }
-      } else {
-        // For description or other string fields
-        const valueA = a[sortConfig.key] || '';
-        const valueB = b[sortConfig.key] || '';
-        
-        if (sortConfig.direction === 'asc') {
-          return valueA.localeCompare(valueB);
-        } else {
-          return valueB.localeCompare(valueA);
+      console.error('Error fetching account balances:', error);
+      // If backend is not available, use stored balances
+      const storedBalances = localStorage.getItem(STORAGE_KEYS.ACCOUNT_BALANCES);
+      if (storedBalances) {
+        try {
+          setAccountBalances(JSON.parse(storedBalances));
+        } catch (e) {
+          console.error('Error parsing stored account balances:', e);
         }
       }
+    }
+  };
+
+  // Fetch transactions
+  const fetchTransactions = async () => {
+    setIsLoading(true);
+    try {
+      const timestamp = new Date().getTime(); // Add cache-busting parameter
+      const response = await axios.get(`http://localhost:8080/api/transactions?_=${timestamp}`);
+      
+      // Transform data if needed
+      const transformedTransactions = response.data.map(transaction => ({
+        ...transaction,
+        date: new Date(transaction.date)
+      }));
+      
+      setTransactions(transformedTransactions);
+      
+      // Store in localStorage as fallback
+      localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(transformedTransactions));
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      
+      // If backend is not available, use stored transactions
+      const storedTransactions = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
+      if (storedTransactions) {
+        try {
+          const parsedTransactions = JSON.parse(storedTransactions);
+          // Convert date strings back to Date objects
+          const transformedTransactions = parsedTransactions.map(transaction => ({
+            ...transaction,
+            date: new Date(transaction.date)
+          }));
+          setTransactions(transformedTransactions);
+        } catch (e) {
+          console.error('Error parsing stored transactions:', e);
+          setErrorMessage('Failed to load transactions. Please try again later.');
+        }
+      }
+      
+      setIsLoading(false);
+    }
+  };
+
+  // Function to handle search input change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Function to handle category filter change
+  const handleCategoryFilterChange = (e) => {
+    setFilterCategory(e.target.value);
+  };
+
+  // Function to handle date range filter change
+  const handleDateFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilterDateRange(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Function to clear all filters
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilterCategory('');
+    setFilterDateRange({
+      startDate: '',
+      endDate: ''
     });
     
-    setFilteredTransactions(filtered);
+    // Reset form elements
+    document.getElementById('searchInput').value = '';
+    document.getElementById('categoryFilter').value = '';
+    document.getElementById('startDate').value = '';
+    document.getElementById('endDate').value = '';
   };
 
-  const handleSort = (key) => {
-    let direction = 'desc';
-    if (sortConfig.key === key && sortConfig.direction === 'desc') {
-      direction = 'asc';
+  // Function to export transactions as CSV
+  const exportTransactionsCSV = () => {
+    // Filter transactions for the active account
+    let filteredTransactions = transactions;
+    if (activeAccount !== 'all') {
+      filteredTransactions = transactions.filter(t => t.accountType === activeAccount);
     }
-    setSortConfig({ key, direction });
+    
+    // Apply search and filters
+    filteredTransactions = filterTransactions(filteredTransactions);
+    
+    // Create CSV content
+    const headers = ['Date', 'Description', 'Category', 'Amount', 'Type', 'Account'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredTransactions.map(t => [
+        formatDate(t.date),
+        `"${t.description.replace(/"/g, '""')}"`, // Escape quotes in description
+        t.category || 'Uncategorized',
+        t.amount,
+        t.type,
+        t.accountType
+      ].join(','))
+    ].join('\n');
+    
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `transactions_${activeAccount}_${formatDate(new Date())}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setSuccessMessage('Transactions exported successfully!');
   };
 
+  // Function to filter transactions based on search and filters
+  const filterTransactions = (transactionsToFilter) => {
+    return transactionsToFilter.filter(transaction => {
+      // Filter by search term
+      const matchesSearch = !searchTerm || 
+        transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (transaction.category && transaction.category.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      // Filter by category
+      const matchesCategory = !filterCategory || transaction.category === filterCategory;
+      
+      // Filter by date range
+      const transactionDate = new Date(transaction.date);
+      const matchesStartDate = !filterDateRange.startDate || transactionDate >= new Date(filterDateRange.startDate);
+      const matchesEndDate = !filterDateRange.endDate || transactionDate <= new Date(filterDateRange.endDate);
+      
+      return matchesSearch && matchesCategory && matchesStartDate && matchesEndDate;
+    });
+  };
+
+  // Format amount with currency symbol
   const formatAmount = (amount) => {
     return new Intl.NumberFormat('en-ZA', {
       style: 'currency',
@@ -284,366 +338,319 @@ function BankStatement() {
     }).format(amount);
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-ZA', {
+  // Format date
+  const formatDate = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleDateString('en-ZA', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric'
     });
   };
 
-  const getTransactionIcon = (transaction) => {
-    const iconStyle = {
-      ...styles.transactionIcon,
-      backgroundColor: transaction.type === 'credit' ? '#ebfaf0' : '#feeeea'
-    };
+  // Handle delete transaction
+  const handleDeleteTransaction = async (transactionId) => {
+    if (!transactionId || isDeleting) return;
     
-    if (transaction.category === 'Payment' || transaction.description?.includes('Pay')) {
-      return (
-        <div style={{ ...iconStyle, backgroundColor: '#feeeea' }}>
-          <CashStack size={16} color="#e74c3c" />
-        </div>
-      );
-    } else if (transaction.description?.includes('Transfer')) {
-      return (
-        <div style={{ ...iconStyle, backgroundColor: '#e7f5fe' }}>
-          <ArrowLeftRight size={16} color="#3498db" />
-        </div>
-      );
-    } else if (transaction.type === 'credit') {
-      return (
-        <div style={{ ...iconStyle, backgroundColor: '#ebfaf0' }}>
-          <ArrowDown size={16} color="#2ecc71" />
-        </div>
-      );
-    } else {
-      return (
-        <div style={{ ...iconStyle, backgroundColor: '#feeeea' }}>
-          <ArrowUp size={16} color="#e74c3c" />
-        </div>
-      );
-    }
-  };
-
-  const getTransactionCategory = (transaction) => {
-    if (transaction.category) {
-      return transaction.category;
-    }
+    setIsDeleting(true);
     
-    if (transaction.description?.includes('Transfer')) {
-      return 'Transfer';
-    } else if (transaction.description?.includes('Deposit')) {
-      return 'Deposit';
-    } else if (transaction.description?.includes('Withdrawal')) {
-      return 'Withdrawal';
-    } else if (transaction.description?.includes('Pay')) {
-      return 'Payment';
-    }
-    
-    return transaction.type === 'credit' ? 'Income' : 'Expense';
-  };
-
-  const getCategoryColor = (category) => {
-    const categoryColors = {
-      'Transfer': '#3498db',
-      'Deposit': '#2ecc71',
-      'Withdrawal': '#e74c3c',
-      'Payment': '#e74c3c',
-      'Income': '#2ecc71',
-      'Expense': '#e74c3c'
-    };
-    
-    return categoryColors[category] || '#7f8c8d';
-  };
-
-  const groupTransactionsByDate = () => {
-    const grouped = {};
-    
-    filteredTransactions.forEach(tx => {
-      const date = tx.date.split('T')[0];
-      if (!grouped[date]) {
-        grouped[date] = [];
+    try {
+      await axios.delete(`http://localhost:8080/api/transactions/${transactionId}`);
+      
+      // Update local state
+      setTransactions(prevTransactions => {
+        const updatedTransactions = prevTransactions.filter(t => t.id !== transactionId);
+        
+        // Update localStorage
+        localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(updatedTransactions));
+        
+        return updatedTransactions;
+      });
+      
+      // Fetch updated account balances
+      fetchAccountBalances();
+      
+      setSuccessMessage('Transaction deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      setErrorMessage('Failed to delete transaction. Please try again.');
+      
+      // If backend is not available, simulate deletion in local state
+      if (!navigator.onLine) {
+        setTransactions(prevTransactions => {
+          const updatedTransactions = prevTransactions.filter(t => t.id !== transactionId);
+          
+          // Update localStorage
+          localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(updatedTransactions));
+          
+          return updatedTransactions;
+        });
       }
-      grouped[date].push(tx);
-    });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Render transaction history component
+  const renderTransactionHistory = () => {
+    // Filter transactions for the active account
+    let filteredTransactions = transactions;
+    if (activeAccount !== 'all') {
+      filteredTransactions = transactions.filter(t => t.accountType === activeAccount);
+    }
     
-    return Object.entries(grouped)
-      .sort(([dateA], [dateB]) => new Date(dateB) - new Date(dateA))
-      .map(([date, transactions]) => ({
-        date,
-        transactions
-      }));
+    // Apply search and filters
+    filteredTransactions = filterTransactions(filteredTransactions);
+    
+    // Get unique categories for filter dropdown
+    const categories = [...new Set(transactions.map(t => t.category).filter(Boolean))];
+    
+    return (
+      <div style={styles.container}>
+        <div style={styles.transactionHistory}>
+          <div style={styles.transactionHeader} className="d-flex justify-content-between align-items-center">
+            <h4 className="mb-0">Transaction History</h4>
+            <div>
+              <button 
+                className="btn btn-outline-primary me-2"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                <Filter size={16} className="me-1" />
+                {showFilters ? 'Hide Filters' : 'Show Filters'}
+              </button>
+              <button 
+                className="btn btn-outline-success"
+                onClick={exportTransactionsCSV}
+              >
+                <Download size={16} className="me-1" />
+                Export CSV
+              </button>
+            </div>
+          </div>
+          
+          {successMessage && (
+            <div style={styles.alertSuccess}>
+              <div>
+                <CheckCircleFill size={16} className="me-2" />
+                {successMessage}
+              </div>
+              <button 
+                className="btn btn-sm" 
+                onClick={() => setSuccessMessage('')}
+                style={{ background: 'none', border: 'none' }}
+              >
+                <XCircle size={16} />
+              </button>
+            </div>
+          )}
+          
+          {errorMessage && (
+            <div style={styles.alertError}>
+              <div>
+                <XCircle size={16} className="me-2" />
+                {errorMessage}
+              </div>
+              <button 
+                className="btn btn-sm" 
+                onClick={() => setErrorMessage('')}
+                style={{ background: 'none', border: 'none' }}
+              >
+                <XCircle size={16} />
+              </button>
+            </div>
+          )}
+          
+          <div style={styles.searchBar}>
+            <Search size={16} className="me-2 text-muted" />
+            <input
+              id="searchInput"
+              type="text"
+              className="form-control border-0 bg-transparent"
+              placeholder="Search transactions..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+            />
+          </div>
+          
+          {showFilters && (
+            <div style={styles.filterContainer}>
+              <div className="row">
+                <div className="col-md-4 mb-3">
+                  <label className="form-label">Category</label>
+                  <select
+                    id="categoryFilter"
+                    className="form-select"
+                    value={filterCategory}
+                    onChange={handleCategoryFilterChange}
+                  >
+                    <option value="">All Categories</option>
+                    {categories.map((category, index) => (
+                      <option key={index} value={category}>{category}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-md-4 mb-3">
+                  <label className="form-label">From Date</label>
+                  <input
+                    id="startDate"
+                    type="date"
+                    className="form-control"
+                    name="startDate"
+                    value={filterDateRange.startDate}
+                    onChange={handleDateFilterChange}
+                  />
+                </div>
+                <div className="col-md-4 mb-3">
+                  <label className="form-label">To Date</label>
+                  <input
+                    id="endDate"
+                    type="date"
+                    className="form-control"
+                    name="endDate"
+                    value={filterDateRange.endDate}
+                    onChange={handleDateFilterChange}
+                  />
+                </div>
+              </div>
+              <div className="d-flex justify-content-end">
+                <button 
+                  className="btn btn-outline-secondary"
+                  onClick={clearFilters}
+                >
+                  Clear Filters
+                </button>
+              </div>
+            </div>
+          )}
+          
+          <div className="mt-4">
+            {isLoading ? (
+              <div className="text-center py-5">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="mt-2">Loading transactions...</p>
+              </div>
+            ) : filteredTransactions.length === 0 ? (
+              <div className="text-center py-5">
+                <p className="mb-0">No transactions found.</p>
+                {(searchTerm || filterCategory || filterDateRange.startDate || filterDateRange.endDate) && (
+                  <button 
+                    className="btn btn-link"
+                    onClick={clearFilters}
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+            ) : (
+              filteredTransactions.map((transaction, index) => (
+                <div 
+                  key={transaction.id || index}
+                  style={{
+                    ...styles.transactionItem,
+                    ...(hoveredTransaction === index ? styles.transactionItemHover : {}),
+                    borderLeftColor: transaction.type === 'credit' || transaction.type === 'deposit' ? '#28a745' : '#dc3545'
+                  }}
+                  onMouseEnter={() => setHoveredTransaction(index)}
+                  onMouseLeave={() => setHoveredTransaction(null)}
+                >
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div>
+                      <p className="mb-1 fw-bold">{transaction.description}</p>
+                      <p className="text-muted small mb-0">{formatDate(transaction.date)}</p>
+                      {transaction.accountType && (
+                        <span className="badge bg-secondary me-1">{transaction.accountType}</span>
+                      )}
+                      {transaction.category && (
+                        <span 
+                          className="badge" 
+                          style={{
+                            backgroundColor: categoryColors[transaction.category] || categoryColors['Other'],
+                            color: 'white'
+                          }}
+                        >
+                          {transaction.category}
+                        </span>
+                      )}
+                    </div>
+                    <div className="d-flex align-items-center">
+                      <div style={styles.transactionAmount} className="me-3">
+                        <p className={`mb-0 fw-bold ${transaction.type === 'credit' || transaction.type === 'deposit' ? 'text-success' : 'text-danger'}`}>
+                          {transaction.type === 'credit' || transaction.type === 'deposit' ? '+' : '-'}{formatAmount(transaction.amount)}
+                        </p>
+                        {transaction.balance && (
+                          <p className="text-muted small mb-0">Balance: {formatAmount(transaction.balance)}</p>
+                        )}
+                      </div>
+                      <button 
+                        className="btn btn-sm btn-outline-danger" 
+                        onClick={() => handleDeleteTransaction(transaction.id)}
+                        disabled={isDeleting}
+                      >
+                        <Trash size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <div className="d-flex flex-wrap justify-content-between align-items-center mb-4">
-          <div>
-            <h2 className="mb-0">Account Statement</h2>
-            <p className="text-muted mb-0">
-              {formatDate(dateRange.startDate)} - {formatDate(dateRange.endDate)}
-            </p>
-          </div>
-          <div className="d-flex gap-2 mt-3 mt-md-0">
-            <button 
-              style={styles.headerButton} 
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Search size={14} className="me-2" />
-              Filter
-            </button>
-            <button style={styles.headerButton}>
-              <Download size={14} className="me-2" />
-              Export
-            </button>
-            <button style={styles.headerButton}>
-              <Printer size={14} className="me-2" />
-              Print
-            </button>
-          </div>
-        </div>
-        
-        <div className="row g-3">
-          <div className="col-md-4">
-            <div style={styles.balanceCard}>
-              <h6 className="mb-2">Current Balance</h6>
-              <h3 className="mb-0">{formatAmount(currentBalance)}</h3>
-            </div>
-          </div>
-          <div className="col-md-8">
-            <div className="row g-3">
-              <div className="col-sm-6">
-                <div className="card h-100">
-                  <div className="card-body">
-                    <h6 className="text-muted mb-2">Total Income</h6>
-                    <h4 className="mb-0" style={styles.credit}>
-                      {formatAmount(
-                        transactions
-                          .filter(tx => tx.type === 'credit')
-                          .reduce((sum, tx) => sum + parseFloat(tx.amount), 0)
-                      )}
-                    </h4>
-                  </div>
-                </div>
-              </div>
-              <div className="col-sm-6">
-                <div className="card h-100">
-                  <div className="card-body">
-                    <h6 className="text-muted mb-2">Total Expenses</h6>
-                    <h4 className="mb-0" style={styles.debit}>
-                      {formatAmount(
-                        transactions
-                          .filter(tx => tx.type === 'debit')
-                          .reduce((sum, tx) => sum + parseFloat(tx.amount), 0)
-                      )}
-                    </h4>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {showFilters && (
-          <div style={styles.filters} className="mt-4">
-            <div className="row g-3">
-              <div className="col-md-3">
-                <label className="form-label">Start Date</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  value={dateRange.startDate}
-                  onChange={(e) => setDateRange({...dateRange, startDate: e.target.value})}
-                  style={styles.input}
-                />
-              </div>
-              <div className="col-md-3">
-                <label className="form-label">End Date</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  value={dateRange.endDate}
-                  onChange={(e) => setDateRange({...dateRange, endDate: e.target.value})}
-                  style={styles.input}
-                />
-              </div>
-              <div className="col-md-3">
-                <label className="form-label">Account</label>
-                <select
-                  className="form-select"
-                  value={activeAccount}
-                  onChange={(e) => setActiveAccount(e.target.value)}
-                  style={styles.input}
-                >
-                  <option value="all">All Accounts</option>
-                  <option value="current">Current Account</option>
-                  <option value="savings">Savings Account</option>
-                </select>
-              </div>
-              <div className="col-md-3">
-                <label className="form-label">Search</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Search transactions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={styles.input}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-      
-      <div style={styles.statement}>
-        {isLoading ? (
-          <div className="text-center py-5">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-3">Loading your statement...</p>
-          </div>
-        ) : filteredTransactions.length === 0 ? (
-          <div className="text-center py-5">
-            <h5>No transactions found</h5>
-            <p className="text-muted">Try adjusting your filters or date range</p>
-          </div>
-        ) : (
-          <>
-            <div className="table-responsive">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th onClick={() => handleSort('date')} style={{cursor: 'pointer'}}>
-                      Date {sortConfig.key === 'date' && (
-                        <SortDown size={12} className={sortConfig.direction === 'desc' ? '' : 'rotate-180'} />
-                      )}
-                    </th>
-                    <th>Description</th>
-                    <th>Account</th>
-                    <th>Category</th>
-                    <th onClick={() => handleSort('amount')} style={{cursor: 'pointer', textAlign: 'right'}}>
-                      Amount {sortConfig.key === 'amount' && (
-                        <SortDown size={12} className={sortConfig.direction === 'desc' ? '' : 'rotate-180'} />
-                      )}
-                    </th>
-                    <th style={{textAlign: 'right'}}>Balance</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {groupTransactionsByDate().map(group => {
-                    let runningBalance = currentBalance;
-                    
-                    return (
-                      <>
-                        <tr key={`date-${group.date}`} style={{backgroundColor: '#f8f9fa'}}>
-                          <td colSpan="6">
-                            <div className="d-flex align-items-center">
-                              <Calendar3 size={14} className="me-2" />
-                              <strong>{formatDate(group.date)}</strong>
-                            </div>
-                          </td>
-                        </tr>
-                        
-                        {group.transactions.map((transaction, index) => {
-                          // Calculate running balance for each transaction
-                          if (transaction.type === 'debit') {
-                            runningBalance += parseFloat(transaction.amount);
-                          } else {
-                            runningBalance -= parseFloat(transaction.amount);
-                          }
-                          
-                          const category = getTransactionCategory(transaction);
-                          
-                          return (
-                            <tr 
-                              key={transaction.id || index} 
-                              style={styles.row}
-                              className="transaction-row"
-                            >
-                              <td>
-                                <div className="d-flex align-items-center">
-                                  {getTransactionIcon(transaction)}
-                                  <div>
-                                    {new Date(transaction.date).toLocaleDateString()}
-                                    <br />
-                                    <small className="text-muted">
-                                      {new Date(transaction.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                    </small>
-                                  </div>
-                                </div>
-                              </td>
-                              <td>
-                                <div>
-                                  <div className="fw-medium">{transaction.description}</div>
-                                  {transaction.recipientName && (
-                                    <small className="text-muted d-block">
-                                      To: {transaction.recipientName} {transaction.recipientAccountNumber && `(${transaction.recipientAccountNumber})`}
-                                    </small>
-                                  )}
-                                  {transaction.user && (
-                                    <small className="text-muted d-block">
-                                      User: {transaction.user}
-                                    </small>
-                                  )}
-                                </div>
-                              </td>
-                              <td>
-                                <div className="fw-medium">{transaction.accountType}</div>
-                                <small className="text-muted">{transaction.accountNumber}</small>
-                              </td>
-                              <td>
-                                <span 
-                                  className="badge" 
-                                  style={{
-                                    backgroundColor: getCategoryColor(category) + '20',
-                                    color: getCategoryColor(category),
-                                    padding: '4px 8px',
-                                    borderRadius: '4px'
-                                  }}
-                                >
-                                  {category}
-                                </span>
-                              </td>
-                              <td style={{textAlign: 'right'}}>
-                                <span style={transaction.type === 'credit' ? styles.credit : styles.debit}>
-                                  {transaction.type === 'credit' ? '+' : '-'}{formatAmount(transaction.amount)}
-                                </span>
-                              </td>
-                              <td style={{textAlign: 'right'}}>
-                                {formatAmount(runningBalance)}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            
-            <div className="d-flex justify-content-between align-items-center mt-4">
-              <div>
-                <small className="text-muted">
-                  Showing {filteredTransactions.length} of {transactions.length} transactions
-                </small>
-              </div>
+    <div className="container-fluid py-4">
+      <div className="row">
+        <div className="col-12">
+          <div className="card mb-4">
+            <div className="card-header d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">Account Selection</h5>
               <div className="d-flex">
-                <button style={{...styles.paginationButton, ...styles.paginationActive}}>1</button>
-                <button style={styles.paginationButton}>2</button>
-                <button style={styles.paginationButton}>3</button>
-                <button style={styles.paginationButton}>Next</button>
+                {activeAccount !== 'all' && (
+                  <div className="me-3 d-flex align-items-center">
+                    <span className="fw-bold me-2">Balance:</span>
+                    <span className="badge bg-success fs-6">
+                      {formatAmount(activeAccount === 'current' ? accountBalances.current : accountBalances.savings)}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
-          </>
-        )}
+            <div className="card-body">
+              <div className="btn-group w-100">
+                <button 
+                  className={`btn ${activeAccount === 'all' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  onClick={() => setActiveAccount('all')}
+                >
+                  All Accounts
+                </button>
+                <button 
+                  className={`btn ${activeAccount === 'current' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  onClick={() => setActiveAccount('current')}
+                >
+                  Current Account
+                </button>
+                <button 
+                  className={`btn ${activeAccount === 'savings' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  onClick={() => setActiveAccount('savings')}
+                >
+                  Savings Account
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="col-12">
+          {renderTransactionHistory()}
+        </div>
       </div>
     </div>
   );
 }
 
-export default BankStatement;
+export default Payments;
