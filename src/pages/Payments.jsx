@@ -310,24 +310,23 @@ function Payments() {
     setSuccessMessage('Transactions exported successfully!');
   };
 
-  // Function to filter transactions based on search and filters
+  // Filter transactions based on active account
   const filterTransactions = (transactionsToFilter) => {
-    return transactionsToFilter.filter(transaction => {
-      // Filter by search term
-      const matchesSearch = !searchTerm || 
-        transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (transaction.category && transaction.category.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      // Filter by category
-      const matchesCategory = !filterCategory || transaction.category === filterCategory;
-      
-      // Filter by date range
-      const transactionDate = new Date(transaction.date);
-      const matchesStartDate = !filterDateRange.startDate || transactionDate >= new Date(filterDateRange.startDate);
-      const matchesEndDate = !filterDateRange.endDate || transactionDate <= new Date(filterDateRange.endDate);
-      
-      return matchesSearch && matchesCategory && matchesStartDate && matchesEndDate;
-    });
+    if (activeAccount === 'all') {
+      return transactionsToFilter;
+    } else {
+      return transactionsToFilter.filter(transaction => {
+        // Check the structure of the transaction object to determine which property to use
+        if (transaction.account && typeof transaction.account === 'string') {
+          return transaction.account.toLowerCase() === activeAccount;
+        } else if (transaction.accountType && typeof transaction.accountType === 'string') {
+          return transaction.accountType.toLowerCase() === activeAccount;
+        } else {
+          // If neither property exists, include the transaction in all views
+          return true;
+        }
+      });
+    }
   };
 
   // Format amount with currency symbol
