@@ -7,6 +7,7 @@ import Transactions from './pages/Transactions';
 import Cards from './pages/Cards';
 import Profile from './pages/Profile';
 
+
 function App() {
   return (
     <Router>
@@ -21,6 +22,7 @@ function App() {
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/cards" element={<Cards />} />
               <Route path="/profile" element={<Profile />} />
+          
             </Routes>
           </div>
         </div>
