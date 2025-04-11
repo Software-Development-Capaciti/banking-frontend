@@ -14,6 +14,7 @@ function Navbar() {
 
   const auth = getAuth();
 
+  // Function to handle input changes
   const handleInputChange = (e) => {
     const { id, value } = e.target;
     setFormData((prevData) => ({
@@ -22,6 +23,7 @@ function Navbar() {
     }));
   };
 
+  // Function to handle form submission
   const handleSubmit = async () => {
     const { email, password } = formData;
 
@@ -36,6 +38,13 @@ function Navbar() {
         alert('Signed in successfully!');
       }
       setError('');
+      // Clear input fields
+      setFormData({
+        name: '',
+        surname: '',
+        email: '',
+        password: '',
+      });
     } catch (err) {
       setError(err.message);
     }
