@@ -1,7 +1,45 @@
 import React, { useState } from 'react';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import '../firebase'; // Import Firebase configuration
 
 function Navbar() {
-  const [isCreatingAccount, setIsCreatingAccount] = useState(false); // State to toggle between login and sign-up
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    surname: '',
+    email: '',
+    password: '',
+  });
+  const [error, setError] = useState('');
+
+  const auth = getAuth();
+
+  const handleInputChange = (e) => {
+    const { id, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [id]: value,
+    }));
+  };
+
+  const handleSubmit = async () => {
+    const { email, password } = formData;
+
+    try {
+      if (isCreatingAccount) {
+        // Create account
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert('Account created successfully!');
+      } else {
+        // Sign in
+        await signInWithEmailAndPassword(auth, email, password);
+        alert('Signed in successfully!');
+      }
+      setError('');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   return (
     <>
@@ -22,7 +60,6 @@ function Navbar() {
         <div className="container-fluid">
           <span className="navbar-brand text-white fw-bold">DevBank</span>
           <div className="d-flex align-items-center">
-            {/* Search Bar */}
             <form className="d-none d-md-flex me-3 position-relative">
               <input
                 className="form-control"
@@ -51,7 +88,6 @@ function Navbar() {
                 }}
               ></i>
             </form>
-            {/* Sign In Button */}
             <button
               className="btn btn-primary text-white"
               style={{
@@ -70,7 +106,6 @@ function Navbar() {
         </div>
       </nav>
 
-      {/* Bootstrap Modal */}
       <div
         className="modal fade"
         id="authModal"
@@ -82,16 +117,16 @@ function Navbar() {
           <div
             className="modal-content"
             style={{
-              backgroundColor: '#1A2526', // Dark background for the modal
-              color: '#fff', // White text
+              backgroundColor: '#1A2526',
+              color: '#fff',
               borderRadius: '10px',
-              border: '1px solid #00C4B4', // Border matching the theme
+              border: '1px solid #00C4B4',
             }}
           >
             <div
               className="modal-header"
               style={{
-                borderBottom: '1px solid #00C4B4', // Border for the header
+                borderBottom: '1px solid #00C4B4',
               }}
             >
               <h5 className="modal-title" id="authModalLabel">
@@ -103,12 +138,12 @@ function Navbar() {
                 data-bs-dismiss="modal"
                 aria-label="Close"
                 style={{
-                  filter: 'invert(1)', // Invert close button color for dark background
+                  filter: 'invert(1)',
                 }}
               ></button>
             </div>
             <div className="modal-body">
-              {isCreatingAccount ? (
+              {isCreatingAccount && (
                 <>
                   <div className="mb-3">
                     <label htmlFor="name" className="form-label">
@@ -118,6 +153,8 @@ function Navbar() {
                       type="text"
                       className="form-control"
                       id="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
                       style={{
                         backgroundColor: '#3A4B4C',
                         border: '1px solid #00C4B4',
@@ -133,69 +170,8 @@ function Navbar() {
                       type="text"
                       className="form-control"
                       id="surname"
-                      style={{
-                        backgroundColor: '#3A4B4C',
-                        border: '1px solid #00C4B4',
-                        color: '#fff',
-                      }}
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label htmlFor="email" className="form-label">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      className="form-control"
-                      id="email"
-                      style={{
-                        backgroundColor: '#3A4B4C',
-                        border: '1px solid #00C4B4',
-                        color: '#fff',
-                      }}
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label htmlFor="password" className="form-label">
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      className="form-control"
-                      id="password"
-                      style={{
-                        backgroundColor: '#3A4B4C',
-                        border: '1px solid #00C4B4',
-                        color: '#fff',
-                      }}
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="mb-3">
-                    <label htmlFor="email" className="form-label">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      className="form-control"
-                      id="email"
-                      style={{
-                        backgroundColor: '#3A4B4C',
-                        border: '1px solid #00C4B4',
-                        color: '#fff',
-                      }}
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label htmlFor="password" className="form-label">
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      className="form-control"
-                      id="password"
+                      value={formData.surname}
+                      onChange={handleInputChange}
                       style={{
                         backgroundColor: '#3A4B4C',
                         border: '1px solid #00C4B4',
@@ -205,34 +181,58 @@ function Navbar() {
                   </div>
                 </>
               )}
+              <div className="mb-3">
+                <label htmlFor="email" className="form-label">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  className="form-control"
+                  id="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  style={{
+                    backgroundColor: '#3A4B4C',
+                    border: '1px solid #00C4B4',
+                    color: '#fff',
+                  }}
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="password" className="form-label">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  className="form-control"
+                  id="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  style={{
+                    backgroundColor: '#3A4B4C',
+                    border: '1px solid #00C4B4',
+                    color: '#fff',
+                  }}
+                />
+              </div>
+              {error && <p className="text-danger">{error}</p>}
             </div>
             <div
               className="modal-footer"
               style={{
-                borderTop: '1px solid #00C4B4', // Border for the footer
+                borderTop: '1px solid #00C4B4',
               }}
             >
-              {isCreatingAccount ? (
-                <button
-                  className="btn btn-primary"
-                  style={{
-                    backgroundColor: '#00C4B4',
-                    border: 'none',
-                  }}
-                >
-                  Create Account
-                </button>
-              ) : (
-                <button
-                  className="btn btn-primary"
-                  style={{
-                    backgroundColor: '#00C4B4',
-                    border: 'none',
-                  }}
-                >
-                  Sign In
-                </button>
-              )}
+              <button
+                className="btn btn-primary"
+                style={{
+                  backgroundColor: '#00C4B4',
+                  border: 'none',
+                }}
+                onClick={handleSubmit}
+              >
+                {isCreatingAccount ? 'Create Account' : 'Sign In'}
+              </button>
               <button
                 className="btn btn-link"
                 onClick={() => setIsCreatingAccount(!isCreatingAccount)}
