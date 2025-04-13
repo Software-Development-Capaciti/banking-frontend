@@ -1,0 +1,73 @@
+/* Sidebar.css */
+
+#sidebar,
+.sidebar-desktop {
+  background-color: #1a2526;
+  width: 250px;
+}
+
+.sidebar-header {
+  color: white;
+}
+
+.sidebar-nav {
+  padding: 0;
+}
+
+.sidebar-nav .nav-item {
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-nav .nav-link {
+  display: flex;
+  align-items: center;
+  color: white;
+  border-radius: 10px;
+  padding: 10px 15px;
+  transition: background 0.3s ease;
+}
+
+.sidebar-nav .nav-link:hover {
+  background: linear-gradient(135deg, #00c4b4 0%, #00a3b9 100%);
+}
+
+.sidebar-nav .nav-link.active {
+  background: linear-gradient(135deg, #00c4b4 0%, #00a3b9 100%);
+}
+
+.sidebar-contact-btn {
+  background: linear-gradient(135deg, #00c4b4 0%, #00a3b9 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  width: 100%;
+  padding: 10px 15px;
+  transition: background 0.3s ease;
+}
+
+.sidebar-contact-btn:hover {
+  filter: brightness(1.1);
+}
+
+.sidebar-title {
+  color: white;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .sidebar-desktop {
+    position: fixed;
+    height: 100vh;
+    padding: 20px;
+  }
+
+  .offcanvas {
+    display: none !important;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .sidebar-desktop {
+    display: none !important;
+  }
+}
