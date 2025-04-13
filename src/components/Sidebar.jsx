@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { House, CreditCard, ArrowLeftRight, Wallet, Person, ChatDots, Gear } from 'react-bootstrap-icons';
+import { House, CreditCard, ArrowLeftRight, Wallet, Person, ChatDots } from 'react-bootstrap-icons';
 
 function Sidebar() {
   const location = useLocation();
@@ -16,7 +16,7 @@ function Sidebar() {
       >
         <div className="offcanvas-header">
           <h5 className="offcanvas-title text-white" id="sidebarLabel">
-            BamBank
+            DevBank
           </h5>
           <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
@@ -69,17 +69,17 @@ function Sidebar() {
             </li>
             <li className="nav-item mb-2">
               <Link
-                to="/payments"
+                to="/bank-statement"
                 className="nav-link d-flex align-items-center text-white"
                 data-bs-dismiss="offcanvas"
                 style={{
-                  background: location.pathname === '/payments' ? 'linear-gradient(135deg, #00C4B4 0%, #00A3B9 100%)' : 'transparent',
+                  background: location.pathname === '/bank-statement' ? 'linear-gradient(135deg, #00C4B4 0%, #00A3B9 100%)' : 'transparent',
                   borderRadius: '10px',
                   padding: '10px 15px'
                 }}
               >
                 <Wallet className="me-2" />
-                Payments
+                Bank Statement
               </Link>
             </li>
             <li className="nav-item mb-2">
@@ -114,7 +114,7 @@ function Sidebar() {
         </div>
       </div>
 
-      {/* Sidebar for Desktop - remains unchanged */}
+      {/* Sidebar for Desktop */}
       <div
         className="d-none d-md-block"
         style={{
@@ -197,10 +197,10 @@ function Sidebar() {
               </li>
               <li className="nav-item mb-2">
                 <Link
-                  to="/payments"
+                  to="/bank-statement"
                   className="nav-link d-flex align-items-center text-white"
                   style={{
-                    background: location.pathname === '/payments' ? 'linear-gradient(135deg, #00C4B4 0%, #00A3B9 100%)' : 'transparent',
+                    background: location.pathname === '/bank-statement' ? 'linear-gradient(135deg, #00C4B4 0%, #00A3B9 100%)' : 'transparent',
                     borderRadius: '10px',
                     padding: '8px 10px',
                     fontSize: '0.9rem',
@@ -210,7 +210,7 @@ function Sidebar() {
                   }}
                 >
                   <Wallet className="me-1" style={{ fontSize: '1.1rem' }} />
-                  Payments
+                  Bank Statement
                 </Link>
               </li>
               <li className="nav-item mb-2">

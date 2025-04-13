@@ -5,7 +5,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
-import Payments from './pages/Payments';
+import BankStatement from './pages/BankStatement';
 import Transactions from './pages/Transactions';
 import Cards from './pages/Cards';
 import Profile from './pages/Profile';
@@ -20,7 +20,6 @@ function App() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('Auth state:', user ? user.uid : 'No user');
       if (user) {
         setIsAuthenticated(true);
         const name = user.displayName || user.email.split('@')[0];
@@ -33,14 +32,10 @@ function App() {
       }
       setLoading(false);
     });
-    return () => {
-      console.log('Unsubscribing auth listener');
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
   const handleLogout = () => {
-    console.log('Logging out');
     auth.signOut().catch((err) => console.error('Logout error:', err));
   };
 
@@ -90,11 +85,11 @@ function App() {
           }
         />
         <Route
-          path="/payments"
+          path="/bank-statement"
           element={
             isAuthenticated ? (
               <AuthLayout>
-                <Payments />
+                <BankStatement />
               </AuthLayout>
             ) : (
               <Navigate to="/signin" />
