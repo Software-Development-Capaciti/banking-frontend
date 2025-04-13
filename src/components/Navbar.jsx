@@ -1,17 +1,17 @@
-function Navbar() {
+function Navbar({ onLogout }) {
   return (
     <nav
       className="navbar navbar-expand-lg"
       style={{
         backgroundColor: 'rgba(26, 37, 38, 0.9)',
         borderBottom: 'none',
-        padding: '10px 15px', // Reduced padding for better fit on mobile
+        padding: '10px 15px',
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
         zIndex: 1000,
-        height: '80px' // Explicitly set height for consistency
+        height: '80px',
       }}
     >
       <div className="container-fluid">
@@ -30,7 +30,7 @@ function Navbar() {
         <span className="navbar-brand text-white fw-bold">DevBank</span>
         <div className="d-flex align-items-center">
           {/* Search Bar */}
-          <form className="d-none d-md-flex me-3 position-relative"> {/* Hide on mobile, show on tablet/desktop */}
+          <form className="d-none d-md-flex me-3 position-relative">
             <input
               className="form-control"
               type="search"
@@ -43,8 +43,8 @@ function Navbar() {
                 borderRadius: '10px',
                 padding: '8px 35px 8px 12px',
                 boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
-                width: '200px', // Reduced width for better fit
-                fontSize: '0.85rem'
+                width: '200px',
+                fontSize: '0.85rem',
               }}
             />
             <i
@@ -54,7 +54,7 @@ function Navbar() {
                 top: '50%',
                 transform: 'translateY(-50%)',
                 color: '#00C4B4',
-                fontSize: '0.9rem'
+                fontSize: '0.9rem',
               }}
             ></i>
           </form>
@@ -76,16 +76,23 @@ function Navbar() {
               <div
                 className="rounded-circle d-flex align-items-center justify-content-center text-white"
                 style={{
-                  width: '35px', // Slightly smaller for mobile
+                  width: '35px',
                   height: '35px',
                   background: 'linear-gradient(135deg, #00C4B4 0%, #00A3B9 100%)',
                   boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-                  fontSize: '0.9rem'
+                  fontSize: '0.9rem',
                 }}
               >
                 BP
               </div>
               <span className="text-white ms-2 d-none d-lg-block">Chadrack Ndalamba</span>
+              <button
+                className="btn btn-link text-white ms-2"
+                style={{ padding: '0', fontSize: '0.9rem' }}
+                onClick={onLogout}
+              >
+                <i className="bi bi-box-arrow-right"></i> Logout
+              </button>
             </div>
           </div>
         </div>

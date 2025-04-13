@@ -1,163 +1,77 @@
-import { useEffect, useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 
-// Local storage keys from Transactions.jsx
-const STORAGE_KEYS = {
-  TRANSACTIONS: 'banking_transactions',
-  ACCOUNT_BALANCES: 'banking_account_balances',
-  USER: 'banking_user',
-};
-
-function Dashboard() {
-  const [dashboardData, setDashboardData] = useState({
-    creditLimit: 0,
-    spend: 0,
-    totalRevenue: 0,
-    payments: [],
-  });
-  const [error, setError] = useState(null);
-  const [userName, setUserName] = useState('User Name');
-
-  // Format amount in ZAR
-  const formatAmount = (amount) => {
-    if (!amount && amount !== 0) return 'R0.00';
-    return new Intl.NumberFormat('en-ZA', {
-      style: 'currency',
-      currency: 'ZAR',
-    }).format(amount);
-  };
-
-  // Load data from localStorage
-  const loadData = useCallback(() => {
-    try {
-      // Load user name
-      const savedUser = localStorage.getItem(STORAGE_KEYS.USER);
-      if (savedUser) {
-        setUserName(savedUser);
-      } else {
-        localStorage.setItem(STORAGE_KEYS.USER, 'User Name');
-      }
-
-      // Load account balances
-      const savedBalances = localStorage.getItem(STORAGE_KEYS.ACCOUNT_BALANCES);
-      let accountBalances = { current: 0, savings: 0 };
-      if (savedBalances) {
-        accountBalances = JSON.parse(savedBalances);
-      }
-
-      // Load transactions
-      const savedTransactions = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
-      let transactions = [];
-      if (savedTransactions) {
-        transactions = JSON.parse(savedTransactions);
-      }
-
-      // Calculate spend
-      const spend = transactions
-        .filter(
-          (t) => t.accountType === 'current' && (t.type === 'debit' || t.type === 'withdrawal')
-        )
-        .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-      // Calculate totalRevenue
-      const totalRevenue = transactions
-        .filter(
-          (t) => t.accountType === 'current' && (t.type === 'credit' || t.type === 'deposit')
-        )
-        .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-      // Map transactions to payments
-      const payments = transactions
-        .filter((t) => t.accountType === 'current')
-        .map((t) => ({
-          user: t.description || 'Unknown',
-          date: t.date ? new Date(t.date).toISOString().split('T')[0] : 'Unknown',
-          amount: t.amount || 0,
-        }))
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 5);
-
-      // Update state
-      setDashboardData({
-        creditLimit: accountBalances.current || 0,
-        spend: spend || 0,
-        totalRevenue: totalRevenue || accountBalances.current || 0,
-        payments,
-      });
-
-      setError(null);
-    } catch (err) {
-      console.error('Error loading data from localStorage:', err);
-      setError('Failed to load dashboard data.');
-    }
-  }, []);
-
-  // Initial load and setup listeners
-  useEffect(() => {
-    // Load data on mount
-    loadData();
-
-    // Listen for storage events (cross-tab updates)
-    const handleStorageChange = (e) => {
-      if (
-        e.key === STORAGE_KEYS.TRANSACTIONS ||
-        e.key === STORAGE_KEYS.ACCOUNT_BALANCES ||
-        e.key === STORAGE_KEYS.USER
-      ) {
-        loadData();
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-
-    // Poll for same-tab updates
-    const intervalId = setInterval(loadData, 1000); // Check every 1 second
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(intervalId);
-    };
-  }, [loadData]);
-
-  // Define the three card types
-  const cardTypes = [
-    { type: 'CREDIT', label: 'Credit Card' },
-    { type: 'DEBIT', label: 'Debit Card' },
-    { type: 'VIRTUAL', label: 'Virtual Card' },
-  ];
-
-  if (error) {
-    return (
-      <div
-        className="p-4"
-        style={{
-          backgroundColor: '#1A2526',
-          minHeight: 'calc(100vh - 60px)',
-          color: 'white',
-        }}
-      >
-        <div className="text-danger">{error}</div>
-      </div>
-    );
-  }
-
+function Landing() {
   return (
     <div
-      className="p-4 p-md-3 p-lg-4"
+      className="p-4 p-md-5"
       style={{
         backgroundColor: '#1A2526',
-        minHeight: 'calc(100vh - 60px)',
-        marginLeft: window.innerWidth < 768 ? '0' : '170px',
-        paddingTop: '60px',
-        overflowY: 'auto',
-        boxSizing: 'border-box',
-        width: window.innerWidth < 768 ? '100%' : 'calc(100% - 150px)',
-        position: 'relative',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'white',
+        fontFamily: '"DM Sans", sans-serif',
       }}
     >
-      {/* Cards Section (VISA Cards) */}
-      <div className="row mb-4">
-        {cardTypes.map((card, index) => (
-          <div className="col-12 col-md-4 mb-3" key={index}>
+      <div className="container">
+        <div className="row align-items-center">
+          {/* Hero Text */}
+          <div className="col-12 col-md-6 mb-4 mb-md-0">
+            <h1
+              style={{
+                fontSize: '2.5rem',
+                fontWeight: 'bold',
+                marginBottom: '1rem',
+              }}
+            >
+              Welcome to Your Banking Hub
+            </h1>
+            <p
+              style={{
+                fontSize: '1.2rem',
+                color: '#e0e0e0',
+                marginBottom: '2rem',
+              }}
+            >
+              Manage your finances with ease. Register or sign in to access your personalized dashboard.
+            </p>
+            <div className="d-flex gap-3">
+              <Link
+                to="/register"
+                className="btn"
+                style={{
+                  backgroundColor: '#00C4B4',
+                  color: 'white',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '10px',
+                  fontSize: '1rem',
+                  textDecoration: 'none',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                }}
+              >
+                Register
+              </Link>
+              <Link
+                to="/signin"
+                className="btn"
+                style={{
+                  backgroundColor: '#2A3B3C',
+                  color: 'white',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '10px',
+                  fontSize: '1rem',
+                  textDecoration: 'none',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                }}
+              >
+                Sign In
+              </Link>
+            </div>
+          </div>
+
+          {/* Decorative VISA Card */}
+          <div className="col-12 col-md-6 d-flex justify-content-center">
             <div
               className="visa-card text-white"
               style={{
@@ -310,8 +224,7 @@ function Dashboard() {
 
                 .visa-card__vendor:before {
                   background-color: #1a2a6c;
-                  left: 0;
-                }
+                  left: ποί
 
                 .visa-card__vendor:after {
                   background-color: #b21f1f;
@@ -403,7 +316,7 @@ function Dashboard() {
                   </svg>
                   <div className="visa-card__chip-texture"></div>
                 </div>
-                <div className="visa-card__type">{card.type}</div>
+                <div className="visa-card__type">DEBIT</div>
                 <div className="visa-card__number">
                   <span className="visa-card__digit-group">0123</span>
                   <span className="visa-card__digit-group">4567</span>
@@ -416,8 +329,8 @@ function Dashboard() {
                 <div className="visa-card__exp-date">
                   <time dateTime="2038-01">01/38</time>
                 </div>
-                <div className="visa-card__name" aria-label={userName}>
-                  {userName}
+                <div className="visa-card__name" aria-label="Your Name">
+                  Your Name
                 </div>
                 <div className="visa-card__vendor" role="img" aria-labelledby="visa-card-vendor">
                   <span id="visa-card-vendor" className="visa-card__vendor-sr">
@@ -428,139 +341,10 @@ function Dashboard() {
               </div>
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* Bank Balance Section */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <h5 className="text-white mb-3">Bank Balance</h5>
-          <div className="d-flex flex-column flex-md-row justify-content-between">
-            <div
-              className="card text-white flex-fill mb-3 mb-md-0 me-md-3"
-              style={{
-                backgroundColor: '#2A3B3C',
-                border: 'none',
-                borderRadius: '15px',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-                padding: '15px',
-              }}
-            >
-              <p className="mb-1">Total Balance</p>
-              <h3>{formatAmount(dashboardData.creditLimit)}</h3>
-            </div>
-            <div
-              className="card text-white flex-fill mb-3 mb-md-0 me-md-3"
-              style={{
-                backgroundColor: '#2A3B3C',
-                border: 'none',
-                borderRadius: '15px',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-                padding: '15px',
-              }}
-            >
-              <p className="mb-1">Credit</p>
-              <h3>{formatAmount(dashboardData.totalRevenue)}</h3>
-            </div>
-            <div
-              className="card text-white flex-fill"
-              style={{
-                backgroundColor: '#2A3B3C',
-                border: 'none',
-                borderRadius: '15px',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-                padding: '15px',
-              }}
-            >
-              <p className="mb-1">Debit</p>
-              <h3>{formatAmount(dashboardData.spend)}</h3>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Statistic and Recent Transaction Section */}
-      <div className="row">
-        {/* Statistic Section */}
-        <div className="col-12 col-md-8 mb-4">
-          <h5 className="text-white mb-3">Statistic</h5>
-          <div
-            className="card"
-            style={{
-              backgroundColor: '#2A3B3C',
-              border: 'none',
-              borderRadius: '15px',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-              padding: '15px',
-            }}
-          >
-            <div className="card-body">
-              <div className="d-flex justify-content-between mb-3">
-                <span className="text-white">Annual Balance Statistic</span>
-                <div>
-                  <button className="btn btn-outline-light btn-sm me-2">Monthly</button>
-                  <button className="btn btn-outline-light btn-sm">Yearly</button>
-                </div>
-              </div>
-              <div
-                style={{
-                  height: '200px',
-                  backgroundColor: '#1A2526',
-                  borderRadius: '10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#00C4B4',
-                }}
-              >
-                [Line Chart Placeholder]
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Transaction Section */}
-        <div className="col-12 col-md-4">
-          <h5 className="text-white mb-3">Recent Transaction</h5>
-          <div
-            className="card"
-            style={{
-              backgroundColor: '#2A3B3C',
-              border: 'none',
-              borderRadius: '15px',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-              padding: '15px',
-            }}
-          >
-            <div className="card-body p-0">
-              {(dashboardData.payments || []).length > 0 ? (
-                dashboardData.payments.map((payment, index) => (
-                  <div
-                    key={index}
-                    className="d-flex justify-content-between align-items-center p-3"
-                    style={{
-                      borderBottom:
-                        index < dashboardData.payments.length - 1
-                          ? '1px solid #3A4B4C'
-                          : 'none',
-                    }}
-                  >
-                    <div>
-                      <p className="text-white mb-1">{payment.user}</p>
-                      <small className="text-muted">{payment.date}</small>
-                    </div>
-                    <span className="text-white">{formatAmount(payment.amount)}</span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-white p-3">No transactions available.</p>
-              )}
-            </div>
-          </div>
         </div>
       </div>
     </div>
   );
 }
 
-export default Dashboard;
+export default Landing;
