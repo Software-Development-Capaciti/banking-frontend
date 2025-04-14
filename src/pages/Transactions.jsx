@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import config from '../config';
 
 // Configure axios
 axios.defaults.headers.common['Content-Type'] = 'application/json';
@@ -246,7 +247,7 @@ function Transactions() {
       
       try {
         // Try to get balances from backend
-        const response = await axios.get('http://localhost:8080/api/dashboard');
+        const response = await axios.get(config.endpoints.dashboard);
         console.log('Received dashboard data:', response.data);
         
         setAccountBalances({
@@ -295,7 +296,7 @@ function Transactions() {
       
       try {
         // Try to get transactions from backend
-        const response = await axios.get('http://localhost:8080/api/transactions');
+        const response = await axios.get(config.endpoints.transactions);
         console.log('Received transactions:', response.data);
         setTransactions(response.data);
         setShowTransactions(true);
@@ -351,7 +352,7 @@ function Transactions() {
       
       try {
         // Try to connect to the backend
-        const response = await axios.post(`http://localhost:8080/api/transactions/${endpoint}`, payload);
+        const response = await axios.post(`${config.endpoints.transactions}/${endpoint}`, payload);
         console.log('Transaction response:', response.data);
         processSuccessfulTransaction(response.data);
       } catch (backendError) {
@@ -638,7 +639,7 @@ function Transactions() {
       try {
         // Try to delete from backend first
         try {
-          await axios.delete(`http://localhost:8080/api/transactions/${transactionId}`);
+          await axios.delete(`${config.endpoints.transactions}/${transactionId}`);
           console.log('Transaction deleted from backend');
         } catch (backendError) {
           console.error('Error deleting transaction from backend:', backendError);
