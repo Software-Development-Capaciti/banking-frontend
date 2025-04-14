@@ -25,7 +25,7 @@ function Landing() {
                 marginBottom: '1rem',
               }}
             >
-              Welcome to Your Banking Hub
+              Welcome to DevBank
             </h1>
             <p
               style={{
