@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import config from '../config';
 
 function Profile() {
   const [profile, setProfile] = useState({ name: '', email: '' });
 
   useEffect(() => {
-    axios.get('http://localhost:8080/api/profile')
+    axios.get(config.endpoints.profile)
       .then(response => setProfile(response.data))
       .catch(error => console.error('Error fetching profile:', error));
   }, []);

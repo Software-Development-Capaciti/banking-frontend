@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import config from '../config';
 
 function Payments() {
   const [payments, setPayments] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:8080/api/payments')
+    axios.get(config.endpoints.payments)
       .then(response => setPayments(response.data))
       .catch(error => console.error('Error fetching payments:', error));
   }, []);

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import config from '../config';
 
 function Dashboard() {
   const [dashboardData, setDashboardData] = useState({ creditLimit: 0, spend: 0, totalRevenue: 0, payments: [] });
 
   useEffect(() => {
-    axios.get('http://localhost:8080/api/dashboard')
+    axios.get(config.endpoints.dashboard)
       .then(response => setDashboardData(response.data))
       .catch(error => console.error('Error fetching dashboard data:', error));
   }, []);
