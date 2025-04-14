@@ -1,12 +1,80 @@
-# React + Vite
+# 💻 Banking System – Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the **React-based frontend** for the Banking System project. It provides a clean and user-friendly UI for interacting with the backend, with authentication handled by **Firebase** and deployment via **Docker**.
 
-Currently, two official plugins are available:
+## ⚙️ Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React.js
+- Firebase Authentication
+- Axios
+- React Router
+- Bootstrap
+- Docker
 
-## Expanding the ESLint configuration
+## 🔐 Authentication
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Authentication is powered by **Firebase**. Users can sign up, log in, and log out securely. Tokens are sent with API requests to authorize access to protected endpoints.
+
+Firebase is configured in `src/firebase.js`.
+
+## 🌐 API Access
+
+All API requests are proxied to the backend server using Axios. Make sure the backend has **CORS** enabled to allow communication.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js (v14+)
+- Firebase account 
+- Docker
+
+### 🛠️ Features
+Login & Signup
+
+View account details
+
+Transfer funds
+
+View transaction history
+
+Responsive UI
+
+### 📂 Project Structure
+frontend/
+├── public/
+├── src/
+|   ├── assest/
+│   ├── components/
+│   ├── pages/
+│   ├── App.css
+│   ├── App.jsx
+|   ├── firebase.js
+|   ├── index.css
+│   └── main.jsx
+
+### Installation
+
+1. Clone the repository and navigate to the frontend folder:
+
+git clone https://github.com/Software-Development-Capaciti/banking-frontend.git
+cd banking-frontend
+
+2. Install Dependencies:
+
+npm install
+
+3. Add your Firebase configuration to .env:
+
+REACT_APP_API_BASE_URL=http://localhost:8080/api
+REACT_APP_FIREBASE_API_KEY=your-api-key
+REACT_APP_FIREBASE_AUTH_DOMAIN=your-app.firebaseapp.com
+REACT_APP_FIREBASE_PROJECT_ID=your-project-id
+
+
+4. Start the development server:
+
+npm start
+
