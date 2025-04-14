@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import config from '../config';
 import Card from '../components/Card';
 
 function Cards() {
@@ -9,7 +10,7 @@ function Cards() {
 
   useEffect(() => {
     setLoading(true);
-    axios.get('http://localhost:8080/api/cards')
+    axios.get(config.endpoints.cards)
       .then(response => {
         setCards(response.data);
         setLoading(false);
