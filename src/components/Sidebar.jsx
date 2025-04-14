@@ -30,7 +30,7 @@ function Sidebar() {
 
   const navItems = [
     { to: '/', label: 'Home', icon: <House className="me-2" /> },
-    // { to: '/cards', label: 'Cards', icon: <CreditCard className="me-2" /> },
+    // { to: '/cards', label: 'Cards', icon: <CreditCard className="me-2" /> }, comment out for now
     {
       to: '/transactions',
       label: 'Transactions',
